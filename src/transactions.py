@@ -3,7 +3,7 @@ import math
 from utils import calculate_hash
 
 
-class Node(object):
+class Node:
     def __init__(self, value: str, left_child=None, right_child=None):
         self.value = value
         self.left_child = left_child

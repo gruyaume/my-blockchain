@@ -1,7 +1,7 @@
 from utils import calculate_hash
 
 
-class Block(object):
+class Block:
     def __init__(self, timestamp: float, transaction_data: str, previous_block_cryptographic_hash=None):
         self.transaction_data = transaction_data
         self.timestamp = timestamp
