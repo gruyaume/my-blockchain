@@ -6,7 +6,7 @@ import pytest
 from block import Block
 
 
-class TestBlock(object):
+class TestBlock:
 
     @pytest.fixture(scope="module")
     def blockchain(self):

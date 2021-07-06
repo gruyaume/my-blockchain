@@ -18,7 +18,7 @@ def is_power_of_2(number_of_leaves: int):
     return math.log2(number_of_leaves).is_integer()
 
 
-def fill_set(list_of_nodes):
+def fill_set(list_of_nodes: list):
     current_number_of_leaves = len(list_of_nodes)
     if is_power_of_2(current_number_of_leaves):
         return list_of_nodes
