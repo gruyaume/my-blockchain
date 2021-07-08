@@ -28,4 +28,3 @@ class Node:
             return True
         else:
             return False
-
