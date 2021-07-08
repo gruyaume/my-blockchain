@@ -1,4 +1,4 @@
-from transactions import build_merkle_tree, calculate_hash
+from merkle_tree import build_merkle_tree, calculate_hash
 
 
 def test_given_2_leaves_when_build_merkle_tree_then_all_leaves_hashes_are_computed_correctly():

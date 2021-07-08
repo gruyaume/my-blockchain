@@ -14,7 +14,7 @@ def compute_tree_depth(number_of_leaves: int) -> int:
     return math.ceil(math.log2(number_of_leaves))
 
 
-def is_power_of_2(number_of_leaves: int):
+def is_power_of_2(number_of_leaves: int) -> bool:
     return math.log2(number_of_leaves).is_integer()
 
 
