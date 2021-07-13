@@ -1,6 +1,6 @@
 import math
 
-from utils import calculate_hash
+from node.utils import calculate_hash
 
 
 class Node:

@@ -1,6 +1,6 @@
 import json
 
-from utils import calculate_hash, convert_transaction_data_to_bytes
+from node.utils import calculate_hash, convert_transaction_data_to_bytes
 
 
 class Block:
