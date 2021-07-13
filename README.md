@@ -3,7 +3,8 @@ The goal of this project is to provide code to support a tutorial on blockchains
 [medium](https://medium.com).
 
 ## Table of contents
-1. [The basics](https://medium.com/coinmonks/create-your-own-blockchain-using-python-d1250733ce5e)
+0. [Introduction](https://gruyaume.medium.com/create-your-own-blockchain-using-python-4efde6721267)
+1. [The basics](https://gruyaume.medium.com/create-your-own-blockchain-using-python-d1250733ce5e)
 2. [Merkle tree](https://gruyaume.medium.com/create-your-own-blockchain-using-python-merkle-tree-pt-2-f84478a30690)
 
 ## Requirements
