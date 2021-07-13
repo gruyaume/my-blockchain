@@ -1,13 +1,11 @@
-import json
+import binascii
 
 import base58
 from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 from Crypto.Signature import pkcs1_15
 
-from wallet.utils import calculate_hash
-from transaction.transaction_input import TransactionInput
-from transaction.transaction_output import TransactionOutput
+from wallet.utils import generate_transaction_data, convert_transaction_data_to_bytes, calculate_hash
 
 
 class Owner:
@@ -27,28 +25,26 @@ def initialize_wallet():
 
 
 class Transaction:
-    def __init__(self, owner: Owner, inputs: [TransactionInput], outputs: [TransactionOutput]):
+    def __init__(self, owner: Owner, receiver_bitcoin_address: bytes, amount: int, signature: str = ""):
         self.owner = owner
-        self.inputs = inputs
-        self.outputs = outputs
+        self.receiver_bitcoin_address = receiver_bitcoin_address
+        self.amount = amount
+        self.signature = signature
 
-    def sign_transaction_data(self, transaction_input: TransactionInput):
-        transaction_dict = {
-            "transaction_hash": str(transaction_input.transaction_hash),
-            "output_index": str(transaction_input.output_index)
-        }
-        transaction_bytes = json.dumps(transaction_dict, indent=2).encode('utf-8')
-        hash_object = SHA256.new(transaction_bytes)
-        signature = pkcs1_15.new(self.owner.private_key).sign(hash_object)
-        return signature
+    def generate_data(self) -> bytes:
+        transaction_data = generate_transaction_data(self.owner.bitcoin_address, self.receiver_bitcoin_address, self.amount)
+        return convert_transaction_data_to_bytes(transaction_data)
 
     def sign(self):
-        for transaction_input in self.inputs:
-            transaction_input.signature = self.sign_transaction_data(transaction_input)
-            transaction_input.public_key = self.owner.public_key
+        transaction_data = self.generate_data()
+        hash_object = SHA256.new(transaction_data)
+        signature = pkcs1_15.new(self.owner.private_key).sign(hash_object)
+        self.signature = binascii.hexlify(signature).decode("utf-8")
 
     def send_to_nodes(self):
         return {
-            "inputs": [i.to_json() for i in self.inputs],
-            "outputs": [i.to_json() for i in self.outputs]
+            "sender_address": self.owner.bitcoin_address,
+            "receiver_address": self.receiver_bitcoin_address,
+            "amount": self.amount,
+            "signature": self.signature
         }

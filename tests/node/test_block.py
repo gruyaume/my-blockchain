@@ -4,7 +4,17 @@ from datetime import datetime
 import pytest
 
 from node.block import Block
-from tests.utils import generate_transaction_data
+from node.utils import calculate_hash, convert_transaction_data_to_bytes
+
+
+def generate_transaction_data(sender: bytes, receiver: bytes, amount: int) -> dict:
+    transaction_data = {
+        "sender": sender,
+        "receiver": receiver,
+        "amount": amount
+    }
+    transaction_data["hash"] = calculate_hash(convert_transaction_data_to_bytes(transaction_data))
+    return transaction_data
 
 
 class TestBlock:
@@ -12,18 +22,14 @@ class TestBlock:
     @pytest.fixture(scope="module")
     def blockchain(self):
         timestamp_0 = datetime.timestamp(datetime.fromisoformat('2011-11-04 00:05:23.111'))
-        inputs = [("0000xxxx:0", 40)]
-        outputs = [(b"Albert", 40)]
-        transaction_data_0 = generate_transaction_data(inputs, outputs)
+        transaction_data_0 = generate_transaction_data(b"aaaa", b"Albert", 40)
         block_0 = Block(
             transaction_data=transaction_data_0,
             timestamp=timestamp_0
         )
 
         timestamp_1 = datetime.timestamp(datetime.fromisoformat('2011-11-04 00:05:23.111'))
-        inputs = [("aaaa1111:0", 40)]
-        outputs = [(b"Bertrand", 30), (b"Albert", 10)]
-        transaction_data_1 = generate_transaction_data(inputs, outputs)
+        transaction_data_1 = generate_transaction_data(b"Albert", b"Bertrand", 30)
         block_1 = Block(
             transaction_data=transaction_data_1,
             timestamp=timestamp_1,
@@ -31,9 +37,7 @@ class TestBlock:
         )
 
         timestamp_2 = datetime.timestamp(datetime.fromisoformat('2011-11-07 00:05:13.222'))
-        inputs = [("bbbb2222:1", 10)]
-        outputs = [(b"Camille", 10)]
-        transaction_data_2 = generate_transaction_data(inputs, outputs)
+        transaction_data_2 = generate_transaction_data(b"Albert", b"Camille", 10)
         block_2 = Block(
             transaction_data=transaction_data_2,
             timestamp=timestamp_2,
@@ -41,9 +45,7 @@ class TestBlock:
         )
 
         timestamp_3 = datetime.timestamp(datetime.fromisoformat('2011-11-09 00:11:13.333'))
-        inputs = [("bbbb2222:0", 30)]
-        outputs = [(b"Camille", 5), (b"Bertrand", 25)]
-        transaction_data_3 = generate_transaction_data(inputs, outputs)
+        transaction_data_3 = generate_transaction_data(b"Bertrand", b"Camille", 5)
         block_3 = Block(
             transaction_data=transaction_data_3,
             timestamp=timestamp_3,
@@ -54,18 +56,14 @@ class TestBlock:
     @pytest.fixture(scope="module")
     def identical_blockchain(self):
         timestamp_0 = datetime.timestamp(datetime.fromisoformat('2011-11-04 00:05:23.111'))
-        inputs = [("0000xxxx:0", 40)]
-        outputs = [(b"Albert", 40)]
-        transaction_data_0 = generate_transaction_data(inputs, outputs)
+        transaction_data_0 = generate_transaction_data(b"aaaa", b"Albert", 40)
         block_0 = Block(
             transaction_data=transaction_data_0,
             timestamp=timestamp_0
         )
 
         timestamp_1 = datetime.timestamp(datetime.fromisoformat('2011-11-04 00:05:23.111'))
-        inputs = [("aaaa1111:0", 40)]
-        outputs = [(b"Bertrand", 30), (b"Albert", 10)]
-        transaction_data_1 = generate_transaction_data(inputs, outputs)
+        transaction_data_1 = generate_transaction_data(b"Albert", b"Bertrand", 30)
         block_1 = Block(
             transaction_data=transaction_data_1,
             timestamp=timestamp_1,
@@ -73,9 +71,7 @@ class TestBlock:
         )
 
         timestamp_2 = datetime.timestamp(datetime.fromisoformat('2011-11-07 00:05:13.222'))
-        inputs = [("bbbb2222:1", 10)]
-        outputs = [(b"Camille", 10)]
-        transaction_data_2 = generate_transaction_data(inputs, outputs)
+        transaction_data_2 = generate_transaction_data(b"Albert", b"Camille", 10)
         block_2 = Block(
             transaction_data=transaction_data_2,
             timestamp=timestamp_2,
@@ -83,9 +79,7 @@ class TestBlock:
         )
 
         timestamp_3 = datetime.timestamp(datetime.fromisoformat('2011-11-09 00:11:13.333'))
-        inputs = [("bbbb2222:0", 30)]
-        outputs = [(b"Camille", 5), (b"Bertrand", 25)]
-        transaction_data_3 = generate_transaction_data(inputs, outputs)
+        transaction_data_3 = generate_transaction_data(b"Bertrand", b"Camille", 5)
         block_3 = Block(
             transaction_data=transaction_data_3,
             timestamp=timestamp_3,
@@ -96,18 +90,14 @@ class TestBlock:
     @pytest.fixture(scope="module")
     def tempered_blockchain(self):
         timestamp_0 = datetime.timestamp(datetime.fromisoformat('2011-11-04 00:05:23.111'))
-        inputs = [("0000xxxx:0", 40)]
-        outputs = [(b"Albert", 40)]
-        transaction_data_0 = generate_transaction_data(inputs, outputs)
+        transaction_data_0 = generate_transaction_data(b"aaaa", b"Albert", 40)
         block_0 = Block(
             transaction_data=transaction_data_0,
             timestamp=timestamp_0
         )
 
         timestamp_1 = datetime.timestamp(datetime.fromisoformat('2011-11-04 00:05:23.111'))
-        inputs = [("aaaa1111:0", 40)]
-        outputs = [(b"Bertrand", 30), (b"Albert", 10)]
-        transaction_data_1 = generate_transaction_data(inputs, outputs)
+        transaction_data_1 = generate_transaction_data(b"Albert", b"Bertrand", 30)
         block_1 = Block(
             transaction_data=transaction_data_1,
             timestamp=timestamp_1,
@@ -115,9 +105,7 @@ class TestBlock:
         )
 
         timestamp_2 = datetime.timestamp(datetime.fromisoformat('2011-11-07 00:05:13.222'))
-        inputs = [("bbbb2222:1", 10)]
-        outputs = [(b"Camille", 8), (b"Albert", 2)]
-        transaction_data_2 = generate_transaction_data(inputs, outputs)
+        transaction_data_2 = generate_transaction_data(b"Albert", b"Camille", 10)
         block_2 = Block(
             transaction_data=transaction_data_2,
             timestamp=timestamp_2,
@@ -125,9 +113,7 @@ class TestBlock:
         )
 
         timestamp_3 = datetime.timestamp(datetime.fromisoformat('2011-11-09 00:11:13.333'))
-        inputs = [("bbbb2222:0", 30)]
-        outputs = [(b"Camille", 5), (b"Bertrand", 25)]
-        transaction_data_3 = generate_transaction_data(inputs, outputs)
+        transaction_data_3 = generate_transaction_data(b"Bertrand", b"Camille", 8)
         block_3 = Block(
             transaction_data=transaction_data_3,
             timestamp=timestamp_3,

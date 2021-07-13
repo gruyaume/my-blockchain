@@ -13,6 +13,7 @@ def calculate_hash(data) -> str:
 
 def convert_transaction_data_to_bytes(transaction_data: dict):
     new_transaction_data = transaction_data.copy()
-    new_transaction_data["inputs"] = str(transaction_data["inputs"])
-    new_transaction_data["outputs"] = str(transaction_data["outputs"])
+    new_transaction_data["sender"] = str(transaction_data["sender"])
+    new_transaction_data["receiver"] = str(transaction_data["receiver"])
+    new_transaction_data["amount"] = str(transaction_data["amount"])
     return json.dumps(new_transaction_data, indent=2).encode('utf-8')
