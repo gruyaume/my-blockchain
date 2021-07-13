@@ -1,13 +1,13 @@
 import json
 
-from node.utils import calculate_hash, convert_transaction_data_to_bytes
+from node.utils import calculate_hash
 
 
 class Block:
     def __init__(
             self,
             timestamp: float,
-            transaction_data: dict,
+            transaction_data: str,
             previous_block=None,
     ):
         self.transaction_data = transaction_data
@@ -23,9 +23,8 @@ class Block:
 
     @property
     def cryptographic_hash(self) -> str:
-        transaction_data_bytes = convert_transaction_data_to_bytes(self.transaction_data)
         block_content = {
-            "transaction_data": str(transaction_data_bytes),
+            "transaction_data": self.transaction_data,
             "timestamp": self.timestamp,
             "previous_block_cryptographic_hash": self.previous_block_cryptographic_hash
         }
