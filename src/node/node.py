@@ -29,19 +29,20 @@ class NodeTransaction:
 
     def execute_script(self, unlocking_script, locking_script):
         unlocking_script_list = unlocking_script.split(" ")
-        signature = unlocking_script_list[0]
-        public_key = unlocking_script_list[1]
         locking_script_list = locking_script.split(" ")
-        receiver_address = locking_script_list[2]
-
-        stack_script = StackScript()
-        stack_script.push(signature)
-        stack_script.push(public_key)
-        stack_script.op_dup()
-        stack_script.op_hash_160()
-        stack_script.push(receiver_address)
-        stack_script.op_equal_verify()
-        stack_script.op_check_sig(self.transaction_data)
+        stack_script = StackScript(self.transaction_data)
+        for element in unlocking_script_list:
+            if element.startswith("OP"):
+                class_method = getattr(StackScript, element.lower())
+                class_method(stack_script)
+            else:
+                stack_script.push(element)
+        for element in locking_script_list:
+            if element.startswith("OP"):
+                class_method = getattr(StackScript, element.lower())
+                class_method(stack_script)
+            else:
+                stack_script.push(element)
 
     def validate(self):
         for tx_input in self.inputs:
