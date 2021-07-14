@@ -2,10 +2,10 @@ from datetime import datetime
 
 import pytest
 
-from node.block import Block
-from node.node import NodeTransaction
 from common.transaction_input import TransactionInput
 from common.transaction_output import TransactionOutput
+from node.block import Block
+from node.node import NodeTransaction
 from wallet.wallet import Transaction, initialize_wallet
 
 
@@ -29,7 +29,7 @@ def blockchain(albert_wallet, bertrand_wallet, camille_wallet):
     timestamp_0 = datetime.timestamp(datetime.fromisoformat('2011-11-04 00:05:23.111'))
     input_0 = TransactionInput(transaction_hash="abcd1234",
                                output_index=0)
-    output_0 = TransactionOutput(public_key_hash="Albert",
+    output_0 = TransactionOutput(public_key_hash=b"Albert",
                                  amount=40)
     inputs = [input_0.to_json()]
     outputs = [output_0.to_json()]
@@ -84,7 +84,9 @@ def blockchain(albert_wallet, bertrand_wallet, camille_wallet):
     return block_3
 
 
-def test_given_valid_signature_when_validate_then_no_exception_is_thrown(blockchain, albert_wallet, camille_wallet):
+def test_given_valid_signature_when_signature_is_validated_then_no_exception_is_thrown(
+        blockchain, albert_wallet, camille_wallet):
+
     utxo_0 = TransactionInput(transaction_hash=blockchain.transaction_hash, output_index=0)
     output_0 = TransactionOutput(public_key_hash=albert_wallet.public_key_hash, amount=5)
     transaction = Transaction(camille_wallet, inputs=[utxo_0], outputs=[output_0])
@@ -96,7 +98,7 @@ def test_given_valid_signature_when_validate_then_no_exception_is_thrown(blockch
     node.validate()
 
 
-def test_given_sender_tries_to_send_fund_from_somebody_else_when_validate_then_exception_is_thrown(
+def test_test_given_sender_tries_to_send_fund_from_somebody_else_when_signature_is_validated_then_exception_is_thrown(
         blockchain, albert_wallet, camille_wallet):
     utxo_0 = TransactionInput(transaction_hash=blockchain.transaction_hash, output_index=1)
     output_0 = TransactionOutput(public_key_hash=albert_wallet.public_key_hash, amount=5)
@@ -106,19 +108,31 @@ def test_given_sender_tries_to_send_fund_from_somebody_else_when_validate_then_e
 
     node = NodeTransaction(blockchain)
     node.receive(transaction_data)
+
     with pytest.raises(Exception):
         node.validate()
 
 
-def test_given_amounts_dont_match_when_validate_then_exception_is_thrown(
-        blockchain, albert_wallet, camille_wallet):
+def test_given_sufficient_funds_when_validate_funds_then_return_true(blockchain, albert_wallet, camille_wallet):
     utxo_0 = TransactionInput(transaction_hash=blockchain.transaction_hash, output_index=0)
-    output_0 = TransactionOutput(public_key_hash=albert_wallet.public_key_hash, amount=6)
+    output_0 = TransactionOutput(public_key_hash=albert_wallet.public_key_hash, amount=5)
     transaction = Transaction(camille_wallet, inputs=[utxo_0], outputs=[output_0])
     transaction.sign()
     transaction_data = transaction.send_to_nodes()
 
     node = NodeTransaction(blockchain)
     node.receive(transaction_data)
+    node.validate()
+    node.validate_funds()
+
+
+def test_given_insufficient_funds_when_validate_funds_then_return_false(blockchain, albert_wallet, camille_wallet):
+    utxo_0 = TransactionInput(transaction_hash=blockchain.transaction_hash, output_index=0)
+    output_0 = TransactionOutput(public_key_hash=albert_wallet.public_key_hash, amount=10)
+    transaction = Transaction(camille_wallet, inputs=[utxo_0], outputs=[output_0])
+    transaction.sign()
+    transaction_data = transaction.send_to_nodes()
+    node = NodeTransaction(blockchain)
+    node.receive(transaction_data)
     with pytest.raises(Exception):
-        node.validate()
+        node.validate_funds()

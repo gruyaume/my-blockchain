@@ -2,19 +2,17 @@ import json
 
 
 class TransactionInput:
-    def __init__(self, transaction_hash: str, output_index: int, public_key: str = "", signature: str = ""):
+    def __init__(self, transaction_hash: str, output_index: int, unlocking_script: str = ""):
         self.transaction_hash = transaction_hash
         self.output_index = output_index
-        self.public_key = public_key
-        self.signature = signature
+        self.unlocking_script = unlocking_script
 
-    def to_json(self, with_signature_and_public_key: bool = True) -> str:
-        if with_signature_and_public_key:
+    def to_json(self, with_unlocking_script: bool = True) -> str:
+        if with_unlocking_script:
             return json.dumps({
                 "transaction_hash": self.transaction_hash,
                 "output_index": self.output_index,
-                "public_key": self.public_key,
-                "signature": self.signature
+                "unlocking_script": self.unlocking_script
             })
         else:
             return json.dumps({

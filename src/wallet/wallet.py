@@ -11,7 +11,7 @@ from common.utils import calculate_hash
 
 
 class Owner:
-    def __init__(self, private_key: RSA.RsaKey, public_key_hash: str, public_key_hex: str):
+    def __init__(self, private_key: RSA.RsaKey, public_key_hash, public_key_hex):
         self.private_key = private_key
         self.public_key_hash = public_key_hash
         self.public_key_hex = public_key_hex
@@ -32,10 +32,8 @@ class Transaction:
         self.outputs = outputs
 
     def sign_transaction_data(self):
-        transaction_dict = {
-            "inputs": [tx_input.to_json(with_signature_and_public_key=False) for tx_input in self.inputs],
-            "outputs": [tx_output.to_json() for tx_output in self.outputs]
-        }
+        transaction_dict = {"inputs": [tx_input.to_json(with_unlocking_script=False) for tx_input in self.inputs],
+                            "outputs": [tx_output.to_json() for tx_output in self.outputs]}
         transaction_bytes = json.dumps(transaction_dict, indent=2).encode('utf-8')
         hash_object = SHA256.new(transaction_bytes)
         signature = pkcs1_15.new(self.owner.private_key).sign(hash_object)
@@ -44,8 +42,7 @@ class Transaction:
     def sign(self):
         signature_hex = binascii.hexlify(self.sign_transaction_data()).decode("utf-8")
         for transaction_input in self.inputs:
-            transaction_input.signature = signature_hex
-            transaction_input.public_key = self.owner.public_key_hex
+            transaction_input.unlocking_script = f"{signature_hex} {self.owner.public_key_hex}"
 
     def send_to_nodes(self):
         return {

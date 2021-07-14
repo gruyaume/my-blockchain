@@ -1,5 +1,3 @@
-import json
-
 from Crypto.Hash import RIPEMD160, SHA256
 
 
