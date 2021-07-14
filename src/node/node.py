@@ -49,22 +49,22 @@ class NodeTransaction:
             locking_script = self.get_locking_script_from_utxo(input_dict["transaction_hash"], input_dict["output_index"])
             self.execute_script(input_dict["unlocking_script"], locking_script)
 
-    # def get_total_amount_in_inputs(self) -> int:
-    #     total_in = 0
-    #     for tx_input in self.inputs:
-    #         input_dict = json.loads(tx_input)
-    #         transaction_data = self.get_transaction_from_utxo(input_dict["transaction_hash"])
-    #         utxo_amount = json.loads(transaction_data["outputs"][input_dict["output_index"]])["amount"]
-    #         total_in = total_in + utxo_amount
-    #     return total_in
-    #
-    # def get_total_amount_in_outputs(self) -> int:
-    #     total_out = 0
-    #     for tx_output in self.outputs:
-    #         output_dict = json.loads(tx_output)
-    #         amount = output_dict["amount"]
-    #         total_out = total_out + amount
-    #     return total_out
-    #
-    # def validate_funds(self):
-    #     assert self.get_total_amount_in_inputs() == self.get_total_amount_in_outputs()
+    def get_total_amount_in_inputs(self) -> int:
+        total_in = 0
+        for tx_input in self.inputs:
+            input_dict = json.loads(tx_input)
+            transaction_data = self.get_transaction_from_utxo(input_dict["transaction_hash"])
+            utxo_amount = json.loads(transaction_data["outputs"][input_dict["output_index"]])["amount"]
+            total_in = total_in + utxo_amount
+        return total_in
+
+    def get_total_amount_in_outputs(self) -> int:
+        total_out = 0
+        for tx_output in self.outputs:
+            output_dict = json.loads(tx_output)
+            amount = output_dict["amount"]
+            total_out = total_out + amount
+        return total_out
+
+    def validate_funds(self):
+        assert self.get_total_amount_in_inputs() == self.get_total_amount_in_outputs()
