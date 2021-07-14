@@ -1,13 +1,20 @@
+import binascii
+import copy
 import json
 
+from Crypto.Hash import SHA256
+from Crypto.PublicKey import RSA
+from Crypto.Signature import pkcs1_15
+
+from common.utils import calculate_hash
 from node.block import Block
-from node.script import StackScript
 
 
 class NodeTransaction:
     def __init__(self, blockchain: Block):
         self.blockchain = blockchain
         self.transaction_data = {}
+        self.signature = ""
         self.inputs = ""
         self.outputs = ""
 
@@ -16,6 +23,20 @@ class NodeTransaction:
         self.inputs = transaction["inputs"]
         self.outputs = transaction["outputs"]
 
+    def validate_signature(self):
+        transaction_data = copy.deepcopy(self.transaction_data)
+        for count, tx_input in enumerate(transaction_data["inputs"]):
+            tx_input_dict = json.loads(tx_input)
+            public_key = tx_input_dict.pop("public_key")
+            signature = tx_input_dict.pop("signature")
+            transaction_data["inputs"][count] = json.dumps(tx_input_dict)
+            signature_decoded = binascii.unhexlify(signature.encode("utf-8"))
+            public_key_bytes = public_key.encode("utf-8")
+            public_key_object = RSA.import_key(binascii.unhexlify(public_key_bytes))
+            transaction_bytes = json.dumps(transaction_data, indent=2).encode('utf-8')
+            transaction_hash = SHA256.new(transaction_bytes)
+            pkcs1_15.new(public_key_object).verify(transaction_hash, signature_decoded)
+
     def get_transaction_from_utxo(self, utxo_hash: str) -> dict:
         current_block = self.blockchain
         while current_block:
@@ -23,31 +44,13 @@ class NodeTransaction:
                 return current_block.transaction_data
             current_block = current_block.previous_block
 
-    def get_locking_script_from_utxo(self, utxo_hash: str, utxo_index: int):
-        transaction_data = self.get_transaction_from_utxo(utxo_hash)
-        return json.loads(transaction_data["outputs"][utxo_index])["locking_script"]
-
-    def execute_script(self, unlocking_script, locking_script):
-        unlocking_script_list = unlocking_script.split(" ")
-        signature = unlocking_script_list[0]
-        public_key = unlocking_script_list[1]
-        locking_script_list = locking_script.split(" ")
-        receiver_address = locking_script_list[2]
-
-        stack_script = StackScript()
-        stack_script.push(signature)
-        stack_script.push(public_key)
-        stack_script.op_dup()
-        stack_script.op_hash_160()
-        stack_script.push(receiver_address)
-        stack_script.op_equal_verify()
-        stack_script.op_check_sig(self.transaction_data)
-
     def validate(self):
-        for tx_input in self.inputs:
-            input_dict = json.loads(tx_input)
-            locking_script = self.get_locking_script_from_utxo(input_dict["transaction_hash"], input_dict["output_index"])
-            self.execute_script(input_dict["unlocking_script"], locking_script)
+        self.validate_signature()
+        self.validate_funds_are_owned_by_sender()
+        self.validate_funds()
+
+    def validate_funds(self):
+        assert self.get_total_amount_in_inputs() == self.get_total_amount_in_outputs()
 
     def get_total_amount_in_inputs(self) -> int:
         total_in = 0
@@ -66,5 +69,11 @@ class NodeTransaction:
             total_out = total_out + amount
         return total_out
 
-    def validate_funds(self):
-        assert self.get_total_amount_in_inputs() == self.get_total_amount_in_outputs()
+    def validate_funds_are_owned_by_sender(self):
+        for tx_input in self.inputs:
+            input_dict = json.loads(tx_input)
+            public_key = input_dict["public_key"]
+            sender_public_key_hash = calculate_hash(calculate_hash(public_key, hash_function="sha256"), hash_function="ripemd160")
+            transaction_data = self.get_transaction_from_utxo(input_dict["transaction_hash"])
+            public_key_hash = json.loads(transaction_data["outputs"][input_dict["output_index"]])["public_key_hash"]
+            assert public_key_hash == sender_public_key_hash
