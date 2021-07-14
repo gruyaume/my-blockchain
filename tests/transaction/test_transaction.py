@@ -1,104 +1,138 @@
-import binascii
-import json
-import os
 from datetime import datetime
 
 import pytest
 
+from common.transaction_input import TransactionInput
+from common.transaction_output import TransactionOutput
 from node.block import Block
 from node.node import NodeTransaction
-from tests.utils import generate_transaction_data
-from transaction.transaction_input import TransactionInput
-from transaction.transaction_output import TransactionOutput
-from wallet.utils import convert_transaction_data_to_bytes
 from wallet.wallet import Transaction, initialize_wallet
 
 
-def open_transaction_file(file_directory: str):
-    f = open(file_directory, "r")
-    file_content = f.read()
-    file_dict = json.loads(file_content)
-    transaction_data = file_dict["transaction_data"].encode("utf-8")
-    transaction_data_dict = json.loads(transaction_data)
-    transaction_data_bytes = convert_transaction_data_to_bytes(transaction_data_dict)
-    signature_bytes = binascii.unhexlify(file_dict["signature"])
-    return transaction_data_bytes, signature_bytes
+@pytest.fixture(scope="module")
+def albert_wallet():
+    return initialize_wallet()
 
 
 @pytest.fixture(scope="module")
-def blockchain():
+def bertrand_wallet():
+    return initialize_wallet()
+
+
+@pytest.fixture(scope="module")
+def camille_wallet():
+    return initialize_wallet()
+
+
+@pytest.fixture(scope="module")
+def blockchain(albert_wallet, bertrand_wallet, camille_wallet):
     timestamp_0 = datetime.timestamp(datetime.fromisoformat('2011-11-04 00:05:23.111'))
-    inputs = [("0000xxxx:0", 40)]
-    outputs = [(b"Albert", 40)]
-    transaction_data_0 = generate_transaction_data(inputs, outputs)
+    input_0 = TransactionInput(transaction_hash="abcd1234",
+                               output_index=0)
+    output_0 = TransactionOutput(public_key_hash=b"Albert",
+                                 amount=40)
+    inputs = [input_0.to_json()]
+    outputs = [output_0.to_json()]
     block_0 = Block(
-        transaction_data=transaction_data_0,
+        transaction_data={"inputs": inputs, "outputs": outputs},
         timestamp=timestamp_0
     )
 
     timestamp_1 = datetime.timestamp(datetime.fromisoformat('2011-11-04 00:05:23.111'))
-    inputs = [("aaaa1111:0", 40)]
-    outputs = [(b"Bertrand", 30), (b"Albert", 10)]
-    transaction_data_1 = generate_transaction_data(inputs, outputs)
+    input_0 = TransactionInput(transaction_hash=block_0.transaction_hash,
+                               output_index=0)
+    output_0 = TransactionOutput(public_key_hash=bertrand_wallet.public_key_hash,
+                                 amount=30)
+    output_1 = TransactionOutput(public_key_hash=albert_wallet.public_key_hash,
+                                 amount=10)
+    inputs = [input_0.to_json()]
+    outputs = [output_0.to_json(), output_1.to_json()]
+
     block_1 = Block(
-        transaction_data=transaction_data_1,
+        transaction_data={"inputs": inputs, "outputs": outputs},
         timestamp=timestamp_1,
         previous_block=block_0
     )
 
     timestamp_2 = datetime.timestamp(datetime.fromisoformat('2011-11-07 00:05:13.222'))
-    inputs = [("bbbb2222:1", 10)]
-    outputs = [(b"Camille", 10)]
-    transaction_data_2 = generate_transaction_data(inputs, outputs)
+    input_0 = TransactionInput(transaction_hash=block_1.transaction_hash,
+                               output_index=1)
+    output_0 = TransactionOutput(public_key_hash=camille_wallet.public_key_hash,
+                                 amount=10)
+    inputs = [input_0.to_json()]
+    outputs = [output_0.to_json()]
     block_2 = Block(
-        transaction_data=transaction_data_2,
+        transaction_data={"inputs": inputs, "outputs": outputs},
         timestamp=timestamp_2,
         previous_block=block_1
     )
 
     timestamp_3 = datetime.timestamp(datetime.fromisoformat('2011-11-09 00:11:13.333'))
-    inputs = [("bbbb2222:0", 30)]
-    outputs = [(b"Camille", 5), (b"Bertrand", 25)]
-    transaction_data_3 = generate_transaction_data(inputs, outputs)
+    input_0 = TransactionInput(transaction_hash=block_1.transaction_hash,
+                               output_index=0)
+    output_0 = TransactionOutput(public_key_hash=camille_wallet.public_key_hash,
+                                 amount=5)
+    output_1 = TransactionOutput(public_key_hash=bertrand_wallet.public_key_hash,
+                                 amount=25)
+    inputs = [input_0.to_json()]
+    outputs = [output_0.to_json(), output_1.to_json()]
     block_3 = Block(
-        transaction_data=transaction_data_3,
+        transaction_data={"inputs": inputs, "outputs": outputs},
         timestamp=timestamp_3,
         previous_block=block_2
     )
     return block_3
 
 
-def test_given_valid_signature_when_signature_is_validated_then_no_exception_is_thrown():
-    owner = initialize_wallet()
-    utxo_0 = TransactionInput(transaction_hash="dd6b073c0dc172f100705d53e295dad06103b8e1e4e74d4632b7950e51be13b9",
-                              output_index=0)
-    output_0 = TransactionOutput(b'Bertrand', 5)
-    transaction = Transaction(owner, inputs=[utxo_0], outputs=[output_0])
+def test_given_valid_signature_when_signature_is_validated_then_no_exception_is_thrown(
+        blockchain, albert_wallet, camille_wallet):
+
+    utxo_0 = TransactionInput(transaction_hash=blockchain.transaction_hash, output_index=0)
+    output_0 = TransactionOutput(public_key_hash=albert_wallet.public_key_hash, amount=5)
+    transaction = Transaction(camille_wallet, inputs=[utxo_0], outputs=[output_0])
     transaction.sign()
+    transaction_data = transaction.send_to_nodes()
 
-    transaction_content = transaction.send_to_nodes()
-
-    node_transaction = NodeTransaction(blockchain)
-    node_transaction.receive(transaction_content)
-    node_transaction.validate_signature()
+    node = NodeTransaction(blockchain)
+    node.receive(transaction_data)
+    node.validate()
 
 
-def test_test_given_non_valid_signature_when_signature_is_validated_then_exception_is_thrown():
-    owner = initialize_wallet()
-    utxo_0 = TransactionInput(transaction_hash="dd6b073c0dc172f100705d53e295dad06103b8e1e4e74d4632b7950e51be13b9",
-                              output_index=0)
-    output_0 = TransactionOutput(b'Bertrand', 5)
-    transaction = Transaction(owner, inputs=[utxo_0], outputs=[output_0])
+def test_test_given_sender_tries_to_send_fund_from_somebody_else_when_signature_is_validated_then_exception_is_thrown(
+        blockchain, albert_wallet, camille_wallet):
+    utxo_0 = TransactionInput(transaction_hash=blockchain.transaction_hash, output_index=1)
+    output_0 = TransactionOutput(public_key_hash=albert_wallet.public_key_hash, amount=5)
+    transaction = Transaction(camille_wallet, inputs=[utxo_0], outputs=[output_0])
     transaction.sign()
+    transaction_data = transaction.send_to_nodes()
 
-    transaction_content = transaction.send_to_nodes()
+    node = NodeTransaction(blockchain)
+    node.receive(transaction_data)
 
-    node_transaction = NodeTransaction(blockchain)
-    node_transaction.receive(transaction_content)
-
-    tx_data_0 = json.loads(node_transaction.inputs[0])
-    tx_data_0["output_index"] = 1
-
-    node_transaction.inputs[0] = json.dumps(tx_data_0)
     with pytest.raises(Exception):
-        node_transaction.validate_signature()
+        node.validate()
+
+
+def test_given_sufficient_funds_when_validate_funds_then_return_true(blockchain, albert_wallet, camille_wallet):
+    utxo_0 = TransactionInput(transaction_hash=blockchain.transaction_hash, output_index=0)
+    output_0 = TransactionOutput(public_key_hash=albert_wallet.public_key_hash, amount=5)
+    transaction = Transaction(camille_wallet, inputs=[utxo_0], outputs=[output_0])
+    transaction.sign()
+    transaction_data = transaction.send_to_nodes()
+
+    node = NodeTransaction(blockchain)
+    node.receive(transaction_data)
+    node.validate()
+    node.validate_funds()
+
+
+def test_given_insufficient_funds_when_validate_funds_then_return_false(blockchain, albert_wallet, camille_wallet):
+    utxo_0 = TransactionInput(transaction_hash=blockchain.transaction_hash, output_index=0)
+    output_0 = TransactionOutput(public_key_hash=albert_wallet.public_key_hash, amount=10)
+    transaction = Transaction(camille_wallet, inputs=[utxo_0], outputs=[output_0])
+    transaction.sign()
+    transaction_data = transaction.send_to_nodes()
+    node = NodeTransaction(blockchain)
+    node.receive(transaction_data)
+    with pytest.raises(Exception):
+        node.validate_funds()

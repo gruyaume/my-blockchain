@@ -1,4 +1,5 @@
-from node.merkle_tree import build_merkle_tree, calculate_hash
+from common.utils import calculate_hash
+from node.merkle_tree import build_merkle_tree
 
 
 def test_given_2_leaves_when_build_merkle_tree_then_all_leaves_hashes_are_computed_correctly():
