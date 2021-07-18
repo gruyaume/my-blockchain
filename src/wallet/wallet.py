@@ -1,6 +1,7 @@
 import binascii
 import json
 
+import requests
 from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 from Crypto.Signature import pkcs1_15
@@ -11,18 +12,15 @@ from common.utils import calculate_hash
 
 
 class Owner:
-    def __init__(self, private_key: RSA.RsaKey, public_key_hash, public_key_hex):
-        self.private_key = private_key
-        self.public_key_hash = public_key_hash
-        self.public_key_hex = public_key_hex
-
-
-def initialize_wallet():
-    private_key = RSA.generate(2048)
-    public_key = private_key.publickey().export_key("DER")
-    public_key_hex = binascii.hexlify(public_key).decode("utf-8")
-    public_key_hash = calculate_hash(calculate_hash(public_key_hex, hash_function="sha256"), hash_function="ripemd160")
-    return Owner(private_key=private_key, public_key_hash=public_key_hash, public_key_hex=public_key_hex)
+    def __init__(self, private_key: str = ""):
+        if private_key:
+            self.private_key = RSA.importKey(private_key)
+        else:
+            self.private_key = RSA.generate(2048)
+        public_key = self.private_key.publickey().export_key("DER")
+        self.public_key_hex = binascii.hexlify(public_key).decode("utf-8")
+        self.public_key_hash = calculate_hash(calculate_hash(self.public_key_hex, hash_function="sha256"),
+                                              hash_function="ripemd160")
 
 
 class Transaction:
@@ -44,8 +42,33 @@ class Transaction:
         for transaction_input in self.inputs:
             transaction_input.unlocking_script = f"{signature_hex} {self.owner.public_key_hex}"
 
-    def send_to_nodes(self):
+    @property
+    def transaction_data(self) -> dict:
         return {
             "inputs": [i.to_json() for i in self.inputs],
             "outputs": [i.to_json() for i in self.outputs]
         }
+
+
+class Node:
+    def __init__(self):
+        ip = "127.0.0.1"
+        port = 5000
+        self.base_url = f"http://{ip}:{port}/"
+
+    def send(self, transaction_data: dict) -> requests.Response:
+        url = f"{self.base_url}transactions"
+        req_return = requests.post(url, json=transaction_data)
+        req_return.raise_for_status()
+        return req_return
+
+
+class Wallet:
+    def __init__(self, owner: Owner):
+        self.owner = owner
+        self.node = Node()
+
+    def process_transaction(self, inputs: [TransactionInput], outputs: [TransactionOutput]) -> requests.Response:
+        transaction = Transaction(self.owner, inputs, outputs)
+        transaction.sign()
+        return self.node.send({"transaction": transaction.transaction_data})

@@ -29,13 +29,13 @@ class StackScript(Stack):
         self.transaction_data = transaction_data
 
     def op_dup(self):
-        public_key = self.pop()
-        self.push(public_key)
-        self.push(public_key)
+        last_element = self.pop()
+        self.push(last_element)
+        self.push(last_element)
 
     def op_hash160(self):
-        public_key = self.pop()
-        self.push(calculate_hash(calculate_hash(public_key, hash_function="sha256"), hash_function="ripemd160"))
+        last_element = self.pop()
+        self.push(calculate_hash(calculate_hash(last_element, hash_function="sha256"), hash_function="ripemd160"))
 
     def op_equal_verify(self):
         last_element_1 = self.pop()

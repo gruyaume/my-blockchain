@@ -16,11 +16,27 @@ The goal of this project is to provide code to support a tutorial on blockchains
 Python 3.8
 
 ### Libraries
+Install libraries with pip:
 `pip3 install -r requirements.txt`
 
 ## Unit tests
-You can run unit tests locally by running the following:
+Run unit tests locally by running the following:
 ```bash
 pip3 install tox
 tox
+```
+
+## Integration tests
+Integration tests allow to complete transactions from the wallet to the node.
+
+1. Start the node's flask server:
+```bash
+export FLASK_APP=src/main.py
+flask run
+```
+
+2. On another terminal window, run integration tests:
+```bash
+export PYTHONPATH=src
+pytest integration_tests
 ```
