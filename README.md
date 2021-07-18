@@ -40,3 +40,6 @@ flask run
 export PYTHONPATH=src
 pytest integration_tests
 ```
+
+Note that you can change the HTTP port that your flask app listens on by adding the `--port` option to `flask run`.
+Example: `flask run --port 5002`
