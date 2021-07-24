@@ -1,18 +1,29 @@
 import json
 from datetime import datetime
-
-from common.utils import calculate_hash
-from common.block import Block
-from common.merkle_tree import build_merkle_tree
 from multiprocessing import shared_memory
 
-NUMBER_OF_ZEROS = 3
+import requests
+
+from common.block import Block
+from common.merkle_tree import build_merkle_tree
+from common.node import Node
+from common.utils import calculate_hash
+
+NUMBER_OF_LEADING_ZEROS = 3
 
 
 class BlockException(Exception):
     def __init__(self, expression, message):
         self.expression = expression
         self.message = message
+
+
+class OtherNode(Node):
+    def __init__(self, ip: str, port: int):
+        super().__init__(ip, port)
+
+    def send_new_block(self, block: dict) -> requests.Response:
+        return self.post(endpoint="new_block", data=block)
 
 
 class NewBlockHeader:
@@ -25,7 +36,7 @@ class NewBlockHeader:
     def get_noonce(self) -> int:  # proof-of-work
         block_header_hash = ""
         self.noonce = 0
-        starting_zeros = "".join([str(0) for _ in range(NUMBER_OF_ZEROS)])
+        starting_zeros = "".join([str(0) for _ in range(NUMBER_OF_LEADING_ZEROS)])
         while not block_header_hash.startswith(starting_zeros):
             self.noonce = self.noonce + 1
             block_header_hash = self.hash
@@ -50,10 +61,15 @@ class NewBlock:
         self.block_header = NewBlockHeader(previous_block_hash, merkle_tree.value)
         self.transactions = transactions
 
+    def to_json(self) -> dict:
+        return {"header": self.block_header.data,
+                "transactions": self.transactions}
+
 
 class ProofOfWork:
     def __init__(self, blockchain: Block):
         self.blockchain = blockchain
+        self.new_block = None
 
     def __enter__(self):
         self.mem_pool = shared_memory.ShareableList(name='mem_pool')
@@ -65,8 +81,15 @@ class ProofOfWork:
     def create_new_block(self):
         transactions = [json.loads(a) for a in self.mem_pool]
         if transactions:
-            new_block = NewBlock(previous_block_hash=self.blockchain.block_header.hash,
-                                 transactions=transactions)
-            return new_block
+            self.new_block = NewBlock(previous_block_hash=self.blockchain.block_header.hash,
+                                      transactions=transactions)
         else:
             raise BlockException("", "No transaction in mem_pool")
+
+    def broadcast(self):
+        node_list = [OtherNode("127.0.0.1", 5001), OtherNode("127.0.0.1", 5002)]
+        for node in node_list:
+            try:
+                node.send_new_block(self.new_block.to_json)
+            except requests.ConnectionError:
+                pass

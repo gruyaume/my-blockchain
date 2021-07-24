@@ -5,6 +5,7 @@ import requests
 from common.block import Block
 from transaction_validation.script import StackScript
 from multiprocessing import shared_memory
+from common.node import Node
 
 
 class TransactionException(Exception):
@@ -13,15 +14,12 @@ class TransactionException(Exception):
         self.message = message
 
 
-class OtherNode:
+class OtherNode(Node):
     def __init__(self, ip: str, port: int):
-        self.base_url = f"http://{ip}:{port}/"
+        super().__init__(ip, port)
 
-    def send(self, transaction_data: dict) -> requests.Response:
-        url = f"{self.base_url}transactions"
-        req_return = requests.post(url, json=transaction_data)
-        req_return.raise_for_status()
-        return req_return
+    def send_transaction(self, transaction_data: dict) -> requests.Response:
+        return self.post("transactions", transaction_data)
 
 
 class Transaction:
@@ -113,7 +111,7 @@ class Transaction:
         node_list = [OtherNode("127.0.0.1", 5001), OtherNode("127.0.0.1", 5002)]
         for node in node_list:
             try:
-                node.send(self.transaction_data)
+                node.send_transaction(self.transaction_data)
             except requests.ConnectionError:
                 pass
 
@@ -127,5 +125,5 @@ class Transaction:
             except FileNotFoundError:
                 mem_pool_list = []
             mem_pool_list.append(json.dumps(self.transaction_data, indent=2))
-            a = shared_memory.ShareableList(mem_pool_list, name="mem_pool")
-            a.shm.close()
+            sharable_list = shared_memory.ShareableList(mem_pool_list, name="mem_pool")
+            sharable_list.shm.close()
