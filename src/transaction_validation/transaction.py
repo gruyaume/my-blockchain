@@ -1,11 +1,10 @@
 import json
-from datetime import datetime
 
 import requests
 
-from node.block import Block
-from node.merkle_tree import build_merkle_tree
-from node.script import StackScript
+from common.block import Block
+from transaction_validation.script import StackScript
+from multiprocessing import shared_memory
 
 
 class TransactionException(Exception):
@@ -25,27 +24,14 @@ class OtherNode:
         return req_return
 
 
-class BlockHeader:
-    def __init__(self, previous_block_hash: str, merkle_root: str, noonce: int = 0):
-        self.previous_block_hash = previous_block_hash
-        self.merkle_root = merkle_root
-        self.timestamp = datetime.timestamp(datetime.fromisoformat('2011-11-04 00:05:23.111'))
-        self.noonce = noonce
-
-
-class NewBlock:
-    def __init__(self, previous_block_hash: str, transactions: [dict]):
-        merkle_tree = build_merkle_tree(transactions)
-        self.block_header = BlockHeader(previous_block_hash, merkle_tree.value)
-        self.transactions = transactions
-
-
-class NodeTransaction:
+class Transaction:
     def __init__(self, blockchain: Block):
         self.blockchain = blockchain
         self.transaction_data = {}
         self.inputs = ""
         self.outputs = ""
+        self.is_valid = False
+        self.is_funds_sufficient = False
 
     def receive(self, transaction: dict):
         self.transaction_data = transaction
@@ -92,6 +78,7 @@ class NodeTransaction:
             locking_script = self.get_locking_script_from_utxo(transaction_hash, output_index)
             try:
                 self.execute_script(input_dict["unlocking_script"], locking_script)
+                self.is_valid = True
             except Exception:
                 raise TransactionException(f"UTXO ({transaction_hash}:{output_index})", "Transaction script validation failed")
 
@@ -117,6 +104,7 @@ class NodeTransaction:
         outputs_total = self.get_total_amount_in_outputs()
         try:
             assert inputs_total == outputs_total
+            self.is_funds_sufficient = True
         except AssertionError:
             raise TransactionException(f"inputs ({inputs_total}), outputs ({outputs_total})",
                                        "Transaction inputs and outputs did not match")
@@ -128,3 +116,16 @@ class NodeTransaction:
                 node.send(self.transaction_data)
             except requests.ConnectionError:
                 pass
+
+    def store(self):
+        if self.is_valid and self.is_funds_sufficient:
+            try:
+                current_mem_pool = shared_memory.ShareableList(name="mem_pool")
+                mem_pool_list = [x for x in current_mem_pool]
+                current_mem_pool.shm.close()
+                current_mem_pool.shm.unlink()
+            except FileNotFoundError:
+                mem_pool_list = []
+            mem_pool_list.append(json.dumps(self.transaction_data, indent=2))
+            a = shared_memory.ShareableList(mem_pool_list, name="mem_pool")
+            a.shm.close()

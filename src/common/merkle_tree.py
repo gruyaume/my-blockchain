@@ -39,7 +39,6 @@ def build_merkle_tree(node_data: [str]) -> Node:
     if tree_depth == 0:
         return Node(value=calculate_hash(node_data[0]))
     for i in range(0, tree_depth):
-        print('ok')
         num_nodes = 2**(tree_depth-i)
         new_set_of_nodes = []
         for j in range(0, num_nodes, 2):

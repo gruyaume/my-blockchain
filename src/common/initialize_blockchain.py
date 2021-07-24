@@ -5,7 +5,7 @@ from blockchain_users.bertrand import private_key as bertrand_private_key
 from blockchain_users.camille import private_key as camille_private_key
 from common.transaction_input import TransactionInput
 from common.transaction_output import TransactionOutput
-from node.block import Block
+from common.block import Block
 from wallet.wallet import Owner
 
 albert_wallet = Owner(private_key=albert_private_key)
@@ -23,7 +23,8 @@ def blockchain():
     outputs = [output_0.to_json()]
     block_0 = Block(
         transactions=[{"inputs": inputs, "outputs": outputs}],
-        timestamp=timestamp_0
+        timestamp=timestamp_0,
+        noonce=2
     )
 
     timestamp_1 = datetime.timestamp(datetime.fromisoformat('2011-11-04 00:05:23.111'))
@@ -39,7 +40,8 @@ def blockchain():
     block_1 = Block(
         transactions=[{"inputs": inputs, "outputs": outputs}],
         timestamp=timestamp_1,
-        previous_block=block_0
+        previous_block=block_0,
+        noonce=3
     )
     timestamp_2 = datetime.timestamp(datetime.fromisoformat('2011-11-07 00:05:13.222'))
     input_0 = TransactionInput(transaction_hash=block_1.transactions[0]["transaction_hash"],
@@ -51,7 +53,8 @@ def blockchain():
     block_2 = Block(
         transactions=[{"inputs": inputs, "outputs": outputs}],
         timestamp=timestamp_2,
-        previous_block=block_1
+        previous_block=block_1,
+        noonce=4
     )
 
     timestamp_3 = datetime.timestamp(datetime.fromisoformat('2011-11-09 00:11:13.333'))
@@ -66,6 +69,7 @@ def blockchain():
     block_3 = Block(
         transactions=[{"inputs": inputs, "outputs": outputs}],
         timestamp=timestamp_3,
-        previous_block=block_2
+        previous_block=block_2,
+        noonce=5
     )
     return block_3
