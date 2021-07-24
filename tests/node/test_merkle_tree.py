@@ -2,6 +2,13 @@ from common.utils import calculate_hash
 from node.merkle_tree import build_merkle_tree
 
 
+def test_given_1_leaf_when_build_merkle_tree_then_leafs_hash_is_computed_correctly():
+    l1 = "blabla data 0"
+    merkle_tree = build_merkle_tree([l1])
+
+    assert merkle_tree.value == calculate_hash(l1)
+
+
 def test_given_2_leaves_when_build_merkle_tree_then_all_leaves_hashes_are_computed_correctly():
     l1 = "blabla data 0"
     l2 = "blabla data 1"

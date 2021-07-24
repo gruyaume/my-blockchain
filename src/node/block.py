@@ -1,38 +1,35 @@
 import json
 
 from common.utils import calculate_hash
+from node.merkle_tree import build_merkle_tree
 
 
 class Block:
     def __init__(
             self,
             timestamp: float,
-            transaction_data: dict,
+            transactions: [dict],
             previous_block=None,
     ):
-        self.transaction_data = transaction_data
+        self.transactions = self.set_transactions_hashes(transactions)
         self.timestamp = timestamp
         self.previous_block = previous_block
+        self.hash = ""
+        self.merkle_root = self.get_merkle_root()
 
-    @property
-    def transaction_hash(self) -> str:
-        transaction_bytes = json.dumps(self.transaction_data, indent=2).encode('utf-8')
-        return calculate_hash(transaction_bytes)
+    def __str__(self):
+        return json.dumps({"timestamp": self.timestamp,
+                           "hash": self.hash,
+                           "transactions": self.transactions})
 
-    @property
-    def previous_block_cryptographic_hash(self):
-        previous_block_cryptographic_hash = ""
-        if self.previous_block:
-            previous_block_cryptographic_hash = self.previous_block.cryptographic_hash
-        return previous_block_cryptographic_hash
+    @staticmethod
+    def set_transactions_hashes(transactions: list) -> list:
+        for transaction in transactions:
+            transaction_bytes = json.dumps(transaction, indent=2).encode('utf-8')
+            transaction["transaction_hash"] = calculate_hash(transaction_bytes)
+        return transactions
 
-    @property
-    def cryptographic_hash(self) -> str:
-        transaction_data_bytes = json.dumps(self.transaction_data, indent=2).encode('utf-8')
-        block_content = {
-            "transaction_data": str(transaction_data_bytes),
-            "timestamp": self.timestamp,
-            "previous_block_cryptographic_hash": self.previous_block_cryptographic_hash
-        }
-        block_content_bytes = json.dumps(block_content, indent=2).encode('utf-8')
-        return calculate_hash(block_content_bytes)
+    def get_merkle_root(self) -> str:
+        transactions_bytes = [json.dumps(transaction, indent=2).encode('utf-8') for transaction in self.transactions]
+        merkle_tree = build_merkle_tree(transactions_bytes)
+        return merkle_tree.value

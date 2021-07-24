@@ -1,8 +1,11 @@
 import json
+from datetime import datetime
+
+import requests
 
 from node.block import Block
+from node.merkle_tree import build_merkle_tree
 from node.script import StackScript
-import requests
 
 
 class TransactionException(Exception):
@@ -22,6 +25,21 @@ class OtherNode:
         return req_return
 
 
+class BlockHeader:
+    def __init__(self, previous_block_hash: str, merkle_root: str, noonce: int = 0):
+        self.previous_block_hash = previous_block_hash
+        self.merkle_root = merkle_root
+        self.timestamp = datetime.timestamp(datetime.fromisoformat('2011-11-04 00:05:23.111'))
+        self.noonce = noonce
+
+
+class NewBlock:
+    def __init__(self, previous_block_hash: str, transactions: [dict]):
+        merkle_tree = build_merkle_tree(transactions)
+        self.block_header = BlockHeader(previous_block_hash, merkle_tree.value)
+        self.transactions = transactions
+
+
 class NodeTransaction:
     def __init__(self, blockchain: Block):
         self.blockchain = blockchain
@@ -37,8 +55,9 @@ class NodeTransaction:
     def get_transaction_from_utxo(self, utxo_hash: str) -> dict:
         current_block = self.blockchain
         while current_block:
-            if utxo_hash == current_block.transaction_hash:
-                return current_block.transaction_data
+            for transaction in current_block.transactions:
+                if utxo_hash == transaction["transaction_hash"]:
+                    return transaction
             current_block = current_block.previous_block
 
     def get_locking_script_from_utxo(self, utxo_hash: str, utxo_index: int):
