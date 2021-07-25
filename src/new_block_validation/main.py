@@ -1,23 +1,21 @@
 from flask import Flask, request
 
 from common.initialize_blockchain import blockchain
-from transaction_validation.transaction import Transaction, TransactionException
+from new_block_validation.new_block_validation import NewBlock, NewBlockException
 
 app = Flask(__name__)
 
 blockchain_base = blockchain()
 
 
-@app.route("/transactions", methods=['POST'])
-def validate_transaction():
+@app.route("/block", methods=['POST'])
+def validate_block():
     content = request.json
     try:
-        node = Transaction(blockchain_base)
-        node.receive(transaction=content["transaction"])
-        node.validate()
-        node.validate_funds()
-        node.broadcast()
-        node.store()
-    except TransactionException as transaction_exception:
-        return f'{transaction_exception}', 400
+        new_block = NewBlock(blockchain_base)
+        new_block.receive(new_block=content["block"])
+        new_block.validate()
+        new_block.add()
+    except NewBlockException as new_block_exception:
+        return f'{new_block_exception}', 400
     return "Transaction success", 200
