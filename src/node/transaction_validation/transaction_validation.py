@@ -3,7 +3,7 @@ import json
 import requests
 
 from common.block import Block
-from transaction_validation.script import StackScript
+from node.transaction_validation.script import StackScript
 from multiprocessing import shared_memory
 from common.node import Node
 

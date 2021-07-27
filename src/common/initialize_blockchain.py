@@ -3,9 +3,9 @@ from datetime import datetime
 from blockchain_users.albert import private_key as albert_private_key
 from blockchain_users.bertrand import private_key as bertrand_private_key
 from blockchain_users.camille import private_key as camille_private_key
+from common.block import Block
 from common.transaction_input import TransactionInput
 from common.transaction_output import TransactionOutput
-from common.block import Block
 from wallet.wallet import Owner
 
 albert_wallet = Owner(private_key=albert_private_key)

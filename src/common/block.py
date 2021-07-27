@@ -1,7 +1,7 @@
 import json
 
-from common.utils import calculate_hash
 from common.merkle_tree import build_merkle_tree
+from common.utils import calculate_hash
 
 
 class BlockHeader:

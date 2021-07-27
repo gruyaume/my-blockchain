@@ -8,8 +8,7 @@ from common.block import Block
 from common.merkle_tree import build_merkle_tree
 from common.node import Node
 from common.utils import calculate_hash
-
-NUMBER_OF_LEADING_ZEROS = 3
+from common.values import NUMBER_OF_LEADING_ZEROS
 
 
 class BlockException(Exception):
@@ -23,7 +22,7 @@ class OtherNode(Node):
         super().__init__(ip, port)
 
     def send_new_block(self, block: dict) -> requests.Response:
-        return self.post(endpoint="new_block", data=block)
+        return self.post(endpoint="block", data=block)
 
 
 class NewBlockHeader:
@@ -61,9 +60,14 @@ class NewBlock:
         self.block_header = NewBlockHeader(previous_block_hash, merkle_tree.value)
         self.transactions = transactions
 
+    @property
     def to_json(self) -> dict:
-        return {"header": self.block_header.data,
-                "transactions": self.transactions}
+        return {
+            "block": {
+                "header": self.block_header.data,
+                "transactions": self.transactions
+            }
+        }
 
 
 class ProofOfWork:
@@ -87,9 +91,6 @@ class ProofOfWork:
             raise BlockException("", "No transaction in mem_pool")
 
     def broadcast(self):
-        node_list = [OtherNode("127.0.0.1", 5001), OtherNode("127.0.0.1", 5002)]
+        node_list = [OtherNode("127.0.0.1", 5000)]
         for node in node_list:
-            try:
-                node.send_new_block(self.new_block.to_json)
-            except requests.ConnectionError:
-                pass
+            node.send_new_block(self.new_block.to_json)
