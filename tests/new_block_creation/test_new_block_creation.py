@@ -4,7 +4,6 @@ from multiprocessing import shared_memory
 import pytest
 
 from common.initialize_blockchain import initialize_blockchain
-from common.utils import calculate_hash
 from node.new_block_creation.new_block_creation import ProofOfWork, NUMBER_OF_LEADING_ZEROS
 
 

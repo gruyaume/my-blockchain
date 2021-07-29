@@ -21,8 +21,8 @@ def initialize_blockchain():
                                output_index=0)
     output_0 = TransactionOutput(public_key_hash=b"Albert",
                                  amount=40)
-    inputs_0 = [input_0.to_json()]
-    outputs_0 = [output_0.to_json()]
+    inputs_0 = [input_0.to_dict()]
+    outputs_0 = [output_0.to_dict()]
     transactions_0 = [{"inputs": inputs_0, "outputs": outputs_0}]
     block_header_0 = BlockHeader(previous_block_hash="1111",
                                  timestamp=timestamp_0,
@@ -40,8 +40,8 @@ def initialize_blockchain():
                                  amount=30)
     output_1 = TransactionOutput(public_key_hash=albert_wallet.public_key_hash,
                                  amount=10)
-    inputs_1 = [input_0.to_json()]
-    outputs_1 = [output_0.to_json(), output_1.to_json()]
+    inputs_1 = [input_0.to_dict()]
+    outputs_1 = [output_0.to_dict(), output_1.to_dict()]
     transactions_1 = [{"inputs": inputs_1, "outputs": outputs_1}]
     block_header_1 = BlockHeader(previous_block_hash=block_0.block_header.hash,
                                  timestamp=timestamp_1,
@@ -57,8 +57,8 @@ def initialize_blockchain():
                                output_index=1)
     output_0 = TransactionOutput(public_key_hash=camille_wallet.public_key_hash,
                                  amount=10)
-    inputs_2 = [input_0.to_json()]
-    outputs_2 = [output_0.to_json()]
+    inputs_2 = [input_0.to_dict()]
+    outputs_2 = [output_0.to_dict()]
     transactions_2 = [{"inputs": inputs_2, "outputs": outputs_2}]
     block_header_2 = BlockHeader(previous_block_hash=block_1.block_header.hash,
                                  timestamp=timestamp_2,
@@ -77,8 +77,8 @@ def initialize_blockchain():
                                  amount=5)
     output_1 = TransactionOutput(public_key_hash=bertrand_wallet.public_key_hash,
                                  amount=25)
-    inputs_3 = [input_0.to_json()]
-    outputs_3 = [output_0.to_json(), output_1.to_json()]
+    inputs_3 = [input_0.to_dict()]
+    outputs_3 = [output_0.to_dict(), output_1.to_dict()]
     transactions_3 = [{"inputs": inputs_3, "outputs": outputs_3}]
     block_header_3 = BlockHeader(previous_block_hash=block_2.block_header.hash,
                                  timestamp=timestamp_3,

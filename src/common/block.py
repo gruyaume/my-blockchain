@@ -83,18 +83,21 @@ class Block:
                            "transactions": self.transactions})
 
     @property
-    def to_json(self) -> str:
+    def to_dict(self):
         block_list = []
         current_block = self
         while current_block:
-
             block_data = {
-                "header": current_block.block_header.to_json,
+                "header": current_block.block_header.to_dict,
                 "transactions": current_block.transactions
             }
             block_list.append(block_data)
             current_block = current_block.previous_block
-        return json.dumps(block_list)
+        return block_list
+
+    @property
+    def to_json(self) -> str:
+        return json.dumps(self.to_dict)
 
     @staticmethod
     def set_transactions_hashes(transactions: list) -> list:

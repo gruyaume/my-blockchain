@@ -11,7 +11,7 @@ def get_blockchain_from_memory() -> Block:
     for block in reversed(current_mem_pool):
         block_dict = json.loads(block)
         block_header_str = block_dict.pop("header")
-        block_header = BlockHeader(**json.loads(block_header_str))
+        block_header = BlockHeader(**block_header_str)
         block_object = Block(**block_dict, block_header=block_header)
         block_object.previous_block = previous_block
         previous_block = block_object

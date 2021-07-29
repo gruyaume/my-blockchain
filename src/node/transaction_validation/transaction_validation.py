@@ -26,8 +26,8 @@ class Transaction:
     def __init__(self, blockchain: Block):
         self.blockchain = blockchain
         self.transaction_data = {}
-        self.inputs = ""
-        self.outputs = ""
+        self.inputs = []
+        self.outputs = []
         self.is_valid = False
         self.is_funds_sufficient = False
 
@@ -48,7 +48,7 @@ class Transaction:
         transaction_data = self.get_transaction_from_utxo(utxo_hash)
         if transaction_data:
             try:
-                return json.loads(transaction_data["outputs"][utxo_index])["locking_script"]
+                return transaction_data["outputs"][utxo_index]["locking_script"]
             except IndexError:
                 print('UTXO hash/output index combination not valid')
                 raise TransactionException(f"{utxo_hash}:{utxo_index}", "UTXO hash/output index combination not valid")
@@ -78,12 +78,11 @@ class Transaction:
     def validate(self):
 
         for tx_input in self.inputs:
-            input_dict = json.loads(tx_input)
-            transaction_hash = input_dict["transaction_hash"]
-            output_index = input_dict["output_index"]
+            transaction_hash = tx_input["transaction_hash"]
+            output_index = tx_input["output_index"]
             locking_script = self.get_locking_script_from_utxo(transaction_hash, output_index)
             try:
-                self.execute_script(input_dict["unlocking_script"], locking_script)
+                self.execute_script(tx_input["unlocking_script"], locking_script)
                 self.is_valid = True
             except Exception:
                 print('Transaction script validation failed')
@@ -92,17 +91,15 @@ class Transaction:
     def get_total_amount_in_inputs(self) -> int:
         total_in = 0
         for tx_input in self.inputs:
-            input_dict = json.loads(tx_input)
-            transaction_data = self.get_transaction_from_utxo(input_dict["transaction_hash"])
-            utxo_amount = json.loads(transaction_data["outputs"][input_dict["output_index"]])["amount"]
+            transaction_data = self.get_transaction_from_utxo(tx_input["transaction_hash"])
+            utxo_amount = transaction_data["outputs"][tx_input["output_index"]]["amount"]
             total_in = total_in + utxo_amount
         return total_in
 
     def get_total_amount_in_outputs(self) -> int:
         total_out = 0
         for tx_output in self.outputs:
-            output_dict = json.loads(tx_output)
-            amount = output_dict["amount"]
+            amount = tx_output["amount"]
             total_out = total_out + amount
         return total_out
 

@@ -23,9 +23,8 @@ class StackScript(Stack):
     def __init__(self, transaction_data: dict):
         super().__init__()
         for count, tx_input in enumerate(transaction_data["inputs"]):
-            tx_input_dict = json.loads(tx_input)
-            tx_input_dict.pop("unlocking_script")
-            transaction_data["inputs"][count] = json.dumps(tx_input_dict)
+            tx_input.pop("unlocking_script")
+            transaction_data["inputs"][count] = tx_input
         self.transaction_data = transaction_data
 
     def op_dup(self):

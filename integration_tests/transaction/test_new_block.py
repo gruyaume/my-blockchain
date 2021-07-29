@@ -5,13 +5,12 @@ import pytest
 import requests
 
 from blockchain_users.camille import private_key as camille_private_key
+from common.blockchain_memory import get_blockchain_from_memory
 from common.initialize_blockchain import initialize_blockchain
 from common.transaction_input import TransactionInput
-from common.blockchain_memory import get_blockchain_from_memory
 from common.transaction_output import TransactionOutput
 from node.new_block_creation.new_block_creation import ProofOfWork
 from wallet.wallet import Owner, Wallet, Transaction
-import time
 
 
 def store_transaction_data(transactions_str: [str]):
@@ -37,7 +36,7 @@ def camille_wallet(camille):
 
 @pytest.fixture(scope="module")
 def create_good_transactions(camille):
-    utxo_0 = TransactionInput(transaction_hash="5669d7971b76850a4d725c75fbbc20ea97bd1382e2cfae43c41e121ca399b660",
+    utxo_0 = TransactionInput(transaction_hash="e10154f49ae1119777b93e5bcd1a1506b6a89c1f82cc85f63c6cbe83a39df5dc",
                               output_index=0)
     output_0 = TransactionOutput(public_key_hash=b"a037a093f0304f159fe1e49cfcfff769eaac7cda", amount=5)
     transaction_1 = Transaction(camille, inputs=[utxo_0], outputs=[output_0])
@@ -84,4 +83,4 @@ def test_given_bad_transactions_in_mem_pool_when_new_block_is_created_then_new_b
         pow.create_new_block()
         with pytest.raises(requests.exceptions.HTTPError) as error:
             pow.broadcast()
-        assert 'Transaction inputs and outputs did not match' in error.value.response.text
+        assert 'No transaction with UTXO hash exists' in error.value.response.text

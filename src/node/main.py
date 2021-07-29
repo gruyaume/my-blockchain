@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 
 from common.blockchain_memory import get_blockchain_from_memory
 from common.initialize_blockchain import initialize_blockchain
@@ -42,4 +42,4 @@ def validate_transaction():
 @app.route("/block", methods=['GET'])
 def get_blocks():
     blockchain_base = get_blockchain_from_memory()
-    return blockchain_base.to_json
+    return jsonify(blockchain_base.to_dict)
