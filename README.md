@@ -33,7 +33,7 @@ Integration tests allow to complete transactions from the wallet to the node.
 
 1. Start the node's flask server:
 ```bash
-export FLASK_APP=src/transaction_validation/main.py
+export FLASK_APP=src/node/main.py
 flask run
 ```
 

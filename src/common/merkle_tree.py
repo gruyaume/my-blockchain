@@ -1,3 +1,4 @@
+import json
 import math
 
 from common.utils import calculate_hash
@@ -52,3 +53,9 @@ def build_merkle_tree(node_data: [str]) -> Node:
             new_set_of_nodes.append(new_node)
         old_set_of_nodes = new_set_of_nodes
     return new_set_of_nodes[0]
+
+
+def get_merkle_root(transactions: list) -> str:
+    transactions_bytes = [json.dumps(transaction, indent=2).encode('utf-8') for transaction in transactions]
+    merkle_tree = build_merkle_tree(transactions_bytes)
+    return merkle_tree.value

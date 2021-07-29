@@ -45,17 +45,17 @@ def test_given_user_has_more_funds_then_necessary_when_process_transaction_then_
 
 
 def test_given_user_points_to_non_existant_utxo_when_process_transaction_then_transaction_is_refused(camille_wallet):
-    utxo_0 = TransactionInput(transaction_hash="5669d5971b76850a4d725c75fbbc20ea97bd1382e2cfae43c41e121ca399b660",
+    utxo_0 = TransactionInput(transaction_hash="5669d7971b76850a4d725c75fbbc20ea97bd1382e24fae43c41e121ca399b660",
                               output_index=0)
     output_0 = TransactionOutput(public_key_hash=b"a037a093f0304f159fe1e49cfcfff769eaac7cda", amount=5)
     with pytest.raises(requests.exceptions.HTTPError) as error:
         camille_wallet.process_transaction(inputs=[utxo_0], outputs=[output_0])
-    assert 'UTXO hash/output index combination not valid' in error.value.response.text
+    assert "No transaction with UTXO hash exists" in error.value.response.text
 
 
-def test_given_user_points_to_utxo_output_index_not_pointing_to_user_when_process_transaction_then_transaction_is_refused(camille_wallet):
-    utxo_0 = TransactionInput(transaction_hash="5669d5971b76850a4d725c75fbbc20ea97bd1382e2cfae43c41e121ca399b660",
-                              output_index=1)
+def test_given_user_points_to_utxo_output_index_not_owned_by_user_when_process_transaction_then_transaction_is_refused(camille_wallet):
+    utxo_0 = TransactionInput(transaction_hash="5669d7971b76850a4d725c75fbbc20ea97bd1382e2cfae43c41e121ca399b660",
+                              output_index=3)
     output_0 = TransactionOutput(public_key_hash=b"a037a093f0304f159fe1e49cfcfff769eaac7cda", amount=5)
     with pytest.raises(requests.exceptions.HTTPError) as error:
         camille_wallet.process_transaction(inputs=[utxo_0], outputs=[output_0])

@@ -2,14 +2,16 @@ import json
 from multiprocessing import shared_memory
 
 import pytest
+import requests
 
 from blockchain_users.camille import private_key as camille_private_key
-from common.initialize_blockchain import blockchain
+from common.initialize_blockchain import initialize_blockchain
 from common.transaction_input import TransactionInput
+from common.blockchain_memory import get_blockchain_from_memory
 from common.transaction_output import TransactionOutput
 from node.new_block_creation.new_block_creation import ProofOfWork
 from wallet.wallet import Owner, Wallet, Transaction
-import requests
+import time
 
 
 def store_transaction_data(transactions_str: [str]):
@@ -57,16 +59,28 @@ def create_bad_transactions(camille):
     store_transaction_data(transactions_str)
 
 
-def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_block_is_accepted(create_good_transactions):
-    blockchain_base = blockchain()
-    with ProofOfWork(blockchain_base) as pow:
+def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_block_is_accepted(
+        create_good_transactions):
+    initialize_blockchain()
+    with ProofOfWork() as pow:
         pow.create_new_block()
         pow.broadcast()
 
 
+def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_block_is_added_to_current_blockchain(
+        create_good_transactions):
+    initialize_blockchain()
+    initial_blockchain = get_blockchain_from_memory()
+    with ProofOfWork() as pow:
+        pow.create_new_block()
+        pow.broadcast()
+        new_block = get_blockchain_from_memory()
+        assert len(new_block) == len(initial_blockchain) + 1
+        assert new_block.block_header.hash == pow.new_block.block_header.hash
+
+
 def test_given_bad_transactions_in_mem_pool_when_new_block_is_created_then_new_block_is_refused(create_bad_transactions):
-    blockchain_base = blockchain()
-    with ProofOfWork(blockchain_base) as pow:
+    with ProofOfWork() as pow:
         pow.create_new_block()
         with pytest.raises(requests.exceptions.HTTPError) as error:
             pow.broadcast()

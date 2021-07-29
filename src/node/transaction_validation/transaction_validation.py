@@ -1,11 +1,11 @@
 import json
+from multiprocessing import shared_memory
 
 import requests
 
 from common.block import Block
-from node.transaction_validation.script import StackScript
-from multiprocessing import shared_memory
 from common.node import Node
+from node.transaction_validation.script import StackScript
 
 
 class TransactionException(Exception):
@@ -47,13 +47,20 @@ class Transaction:
     def get_locking_script_from_utxo(self, utxo_hash: str, utxo_index: int):
         transaction_data = self.get_transaction_from_utxo(utxo_hash)
         if transaction_data:
-            return json.loads(transaction_data["outputs"][utxo_index])["locking_script"]
+            try:
+                return json.loads(transaction_data["outputs"][utxo_index])["locking_script"]
+            except IndexError:
+                print('UTXO hash/output index combination not valid')
+                raise TransactionException(f"{utxo_hash}:{utxo_index}", "UTXO hash/output index combination not valid")
         else:
-            raise TransactionException(f"{utxo_hash}:{utxo_index}", "UTXO hash/output index combination not valid")
+            print('No transaction with UTXO hash exists')
+            raise TransactionException(f"{utxo_hash}:{utxo_index}", "No transaction with UTXO hash exists")
 
     def execute_script(self, unlocking_script, locking_script):
         unlocking_script_list = unlocking_script.split(" ")
         locking_script_list = locking_script.split(" ")
+        if "transaction_hash" in self.transaction_data:
+            self.transaction_data.pop("transaction_hash")
         stack_script = StackScript(self.transaction_data)
         for element in unlocking_script_list:
             if element.startswith("OP"):
@@ -69,6 +76,7 @@ class Transaction:
                 stack_script.push(element)
 
     def validate(self):
+
         for tx_input in self.inputs:
             input_dict = json.loads(tx_input)
             transaction_hash = input_dict["transaction_hash"]
@@ -78,6 +86,7 @@ class Transaction:
                 self.execute_script(input_dict["unlocking_script"], locking_script)
                 self.is_valid = True
             except Exception:
+                print('Transaction script validation failed')
                 raise TransactionException(f"UTXO ({transaction_hash}:{output_index})", "Transaction script validation failed")
 
     def get_total_amount_in_inputs(self) -> int:
@@ -104,6 +113,7 @@ class Transaction:
             assert inputs_total == outputs_total
             self.is_funds_sufficient = True
         except AssertionError:
+            print('Transaction inputs and outputs did not match')
             raise TransactionException(f"inputs ({inputs_total}), outputs ({outputs_total})",
                                        "Transaction inputs and outputs did not match")
 
