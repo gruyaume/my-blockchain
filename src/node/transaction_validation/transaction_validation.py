@@ -1,3 +1,5 @@
+import copy
+
 import requests
 
 from common.block import Block
@@ -59,9 +61,10 @@ class Transaction:
     def execute_script(self, unlocking_script, locking_script):
         unlocking_script_list = unlocking_script.split(" ")
         locking_script_list = locking_script.split(" ")
-        if "transaction_hash" in self.transaction_data:
-            self.transaction_data.pop("transaction_hash")
-        stack_script = StackScript(self.transaction_data)
+        transaction_data = copy.deepcopy(self.transaction_data)
+        if "transaction_hash" in transaction_data:
+            transaction_data.pop("transaction_hash")
+        stack_script = StackScript(transaction_data)
         for element in unlocking_script_list:
             if element.startswith("OP"):
                 class_method = getattr(StackScript, element.lower())

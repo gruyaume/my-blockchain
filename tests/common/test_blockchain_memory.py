@@ -1,5 +1,5 @@
-from common.blockchain_memory import get_blockchain_from_memory
 from common.initialize_blockchain import initialize_blockchain
+from common.io_blockchain import get_blockchain_from_memory
 
 
 def test_given_two_memory_reads_from_blockchain_both_yield_same_value():

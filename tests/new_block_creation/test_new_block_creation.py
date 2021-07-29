@@ -19,6 +19,6 @@ def starting_zeros():
 def test_given_transactions_in_mem_pool_when_new_block_is_created_then_header_hash_starts_with_four_zeros(
         store_transactions_in_mem_pool, starting_zeros):
     initialize_blockchain()
-    with ProofOfWork() as pow:
-        pow.create_new_block()
+    pow = ProofOfWork()
+    pow.create_new_block()
     assert pow.new_block.block_header.hash.startswith(starting_zeros)

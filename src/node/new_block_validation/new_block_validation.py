@@ -38,6 +38,7 @@ class NewBlock:
             raise NewBlockException("", "Proof of work validation failed")
 
     def _validate_transactions(self):
+
         for transaction in self.new_block.transactions:
             transaction_validation = Transaction(self.blockchain)
             transaction_validation.receive(transaction=transaction)

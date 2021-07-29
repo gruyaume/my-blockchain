@@ -3,7 +3,7 @@ import requests
 
 from blockchain_users.camille import private_key as camille_private_key
 from common.initialize_blockchain import initialize_blockchain
-from common.io_blockchain import get_blockchain_from_memory, store_blockchain_in_memory
+from common.io_blockchain import get_blockchain_from_memory
 from common.io_mem_pool import store_transactions_in_memory
 from common.transaction_input import TransactionInput
 from common.transaction_output import TransactionOutput
@@ -61,7 +61,6 @@ def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_
     pow.create_new_block()
     pow.broadcast()
     new_block = get_blockchain_from_memory()
-    store_blockchain_in_memory(new_block)
     assert len(new_block) == len(initial_blockchain) + 1
     assert new_block.block_header.hash == pow.new_block.block_header.hash
 
