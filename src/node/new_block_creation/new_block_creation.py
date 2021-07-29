@@ -1,11 +1,11 @@
 import json
 from datetime import datetime
-from multiprocessing import shared_memory
 
 import requests
 
 from common.block import Block, BlockHeader
-from common.blockchain_memory import get_blockchain_from_memory
+from common.io_blockchain import get_blockchain_from_memory
+from common.io_mem_pool import get_transactions_from_memory
 from common.merkle_tree import get_merkle_root
 from common.node import Node
 from common.utils import calculate_hash
@@ -31,13 +31,6 @@ class ProofOfWork:
         self.blockchain = get_blockchain_from_memory()
         self.new_block = None
 
-    def __enter__(self):
-        self.mem_pool = shared_memory.ShareableList(name='mem_pool')
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.mem_pool.shm.close()
-
     def get_noonce(self, block_header: BlockHeader) -> int:
         block_header_hash = ""
         noonce = block_header.noonce
@@ -54,7 +47,7 @@ class ProofOfWork:
         return noonce
 
     def create_new_block(self):
-        transactions = [json.loads(a) for a in self.mem_pool]
+        transactions = get_transactions_from_memory()
         if transactions:
             block_header = BlockHeader(
                 merkle_root=get_merkle_root(transactions),

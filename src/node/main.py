@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 
-from common.blockchain_memory import get_blockchain_from_memory
 from common.initialize_blockchain import initialize_blockchain
+from common.io_blockchain import get_blockchain_from_memory
 from node.new_block_validation.new_block_validation import NewBlock, NewBlockException
 from node.transaction_validation.transaction_validation import Transaction, TransactionException
 
@@ -43,3 +43,15 @@ def validate_transaction():
 def get_blocks():
     blockchain_base = get_blockchain_from_memory()
     return jsonify(blockchain_base.to_dict)
+
+
+@app.route("/utxo/<user>", methods=['GET'])
+def get_user_utxos(user):
+    blockchain_base = get_blockchain_from_memory()
+    return jsonify(blockchain_base.get_user_utxos(user))
+
+
+@app.route("/transactions/<transaction_hash>", methods=['GET'])
+def get_transaction(transaction_hash):
+    blockchain_base = get_blockchain_from_memory()
+    return jsonify(blockchain_base.get_transaction(transaction_hash))

@@ -1,27 +1,14 @@
-import json
-from multiprocessing import shared_memory
-
 import pytest
 import requests
 
 from blockchain_users.camille import private_key as camille_private_key
-from common.blockchain_memory import get_blockchain_from_memory
 from common.initialize_blockchain import initialize_blockchain
+from common.io_blockchain import get_blockchain_from_memory, store_blockchain_in_memory
+from common.io_mem_pool import store_transactions_in_memory
 from common.transaction_input import TransactionInput
 from common.transaction_output import TransactionOutput
 from node.new_block_creation.new_block_creation import ProofOfWork
 from wallet.wallet import Owner, Wallet, Transaction
-
-
-def store_transaction_data(transactions_str: [str]):
-    try:
-        sharable_list = shared_memory.ShareableList(transactions_str, name="mem_pool")
-    except FileExistsError:
-        current_sharable_list = shared_memory.ShareableList(name='mem_pool')
-        current_sharable_list.shm.close()
-        current_sharable_list.shm.unlink()
-        sharable_list = shared_memory.ShareableList(transactions_str, name="mem_pool")
-    sharable_list.shm.close()
 
 
 @pytest.fixture(scope="module")
@@ -42,8 +29,8 @@ def create_good_transactions(camille):
     transaction_1 = Transaction(camille, inputs=[utxo_0], outputs=[output_0])
     transaction_1.sign()
     transactions = [transaction_1]
-    transactions_str = [json.dumps(transaction.transaction_data, indent=2) for transaction in transactions]
-    store_transaction_data(transactions_str)
+    transactions_str = [transaction.transaction_data for transaction in transactions]
+    store_transactions_in_memory(transactions_str)
 
 
 @pytest.fixture(scope="module")
@@ -54,33 +41,35 @@ def create_bad_transactions(camille):
     transaction_1 = Transaction(camille, inputs=[utxo_0], outputs=[output_0])
     transaction_1.sign()
     transactions = [transaction_1]
-    transactions_str = [json.dumps(transaction.transaction_data, indent=2) for transaction in transactions]
-    store_transaction_data(transactions_str)
+    transactions_str = [transaction.transaction_data for transaction in transactions]
+    store_transactions_in_memory(transactions_str)
 
 
 def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_block_is_accepted(
         create_good_transactions):
     initialize_blockchain()
-    with ProofOfWork() as pow:
-        pow.create_new_block()
-        pow.broadcast()
+    pow = ProofOfWork()
+    pow.create_new_block()
+    pow.broadcast()
 
 
 def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_block_is_added_to_current_blockchain(
         create_good_transactions):
     initialize_blockchain()
     initial_blockchain = get_blockchain_from_memory()
-    with ProofOfWork() as pow:
-        pow.create_new_block()
-        pow.broadcast()
-        new_block = get_blockchain_from_memory()
-        assert len(new_block) == len(initial_blockchain) + 1
-        assert new_block.block_header.hash == pow.new_block.block_header.hash
+    pow = ProofOfWork()
+    pow.create_new_block()
+    pow.broadcast()
+    new_block = get_blockchain_from_memory()
+    store_blockchain_in_memory(new_block)
+    assert len(new_block) == len(initial_blockchain) + 1
+    assert new_block.block_header.hash == pow.new_block.block_header.hash
 
 
 def test_given_bad_transactions_in_mem_pool_when_new_block_is_created_then_new_block_is_refused(create_bad_transactions):
-    with ProofOfWork() as pow:
-        pow.create_new_block()
-        with pytest.raises(requests.exceptions.HTTPError) as error:
-            pow.broadcast()
-        assert 'No transaction with UTXO hash exists' in error.value.response.text
+    initialize_blockchain()
+    pow = ProofOfWork()
+    pow.create_new_block()
+    with pytest.raises(requests.exceptions.HTTPError) as error:
+        pow.broadcast()
+    assert 'No transaction with UTXO hash exists' in error.value.response.text

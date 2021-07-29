@@ -1,20 +1,14 @@
-import json
-from multiprocessing import shared_memory
-
 import pytest
 
 from common.initialize_blockchain import initialize_blockchain
+from common.io_mem_pool import store_transactions_in_memory
 from node.new_block_creation.new_block_creation import ProofOfWork, NUMBER_OF_LEADING_ZEROS
 
 
 @pytest.fixture(scope="module")
 def store_transactions_in_mem_pool():
     transactions = [{"inputs": ["b"], "outputs": ["c"]}, {"inputs": ["d"], "outputs": ["e"]}]
-    transactions_str = []
-    for transaction in transactions:
-        transactions_str.append(json.dumps(transaction, indent=2))
-    a = shared_memory.ShareableList(transactions_str, name="mem_pool")
-    a.shm.close()
+    store_transactions_in_memory(transactions)
 
 
 @pytest.fixture(scope="module")

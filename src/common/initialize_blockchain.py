@@ -4,7 +4,7 @@ from blockchain_users.albert import private_key as albert_private_key
 from blockchain_users.bertrand import private_key as bertrand_private_key
 from blockchain_users.camille import private_key as camille_private_key
 from common.block import Block, BlockHeader
-from common.blockchain_memory import store_blockchain_in_memory
+from common.io_blockchain import store_blockchain_in_memory
 from common.merkle_tree import get_merkle_root
 from common.transaction_input import TransactionInput
 from common.transaction_output import TransactionOutput

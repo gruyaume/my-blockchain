@@ -1,11 +1,11 @@
-import json
-from multiprocessing import shared_memory
-
 import requests
 
 from common.block import Block
+from common.io_mem_pool import get_transactions_from_memory, store_transactions_in_memory
 from common.node import Node
 from node.transaction_validation.script import StackScript
+
+FILENAME = "src/doc/mem_pool"
 
 
 class TransactionException(Exception):
@@ -124,13 +124,6 @@ class Transaction:
 
     def store(self):
         if self.is_valid and self.is_funds_sufficient:
-            try:
-                current_mem_pool = shared_memory.ShareableList(name="mem_pool")
-                mem_pool_list = [x for x in current_mem_pool]
-                current_mem_pool.shm.close()
-                current_mem_pool.shm.unlink()
-            except FileNotFoundError:
-                mem_pool_list = []
-            mem_pool_list.append(json.dumps(self.transaction_data, indent=2))
-            sharable_list = shared_memory.ShareableList(mem_pool_list, name="mem_pool")
-            sharable_list.shm.close()
+            current_transactions = get_transactions_from_memory()
+            current_transactions.append(self.transaction_data)
+            store_transactions_in_memory(current_transactions)

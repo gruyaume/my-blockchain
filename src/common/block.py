@@ -107,3 +107,31 @@ class Block:
             transaction_bytes = json.dumps(transaction_data, indent=2).encode('utf-8')
             transaction["transaction_hash"] = calculate_hash(transaction_bytes)
         return transactions
+
+    def get_transaction(self, transaction_hash: dict) -> dict:
+        current_block = self
+        while current_block.previous_block:
+            for transaction in current_block.transactions:
+                if transaction["transaction_hash"] == transaction_hash:
+                    return transaction
+            current_block = current_block.previous_block
+        return {}
+
+    def get_user_utxos(self, user: str) -> dict:
+        return_dict = {
+            "user": user,
+            "total": 0,
+            "utxos": []
+        }
+        current_block = self
+        while current_block.previous_block:
+            for transaction in current_block.transactions:
+                for output in transaction["outputs"]:
+                    locking_script = output["locking_script"]
+                    for element in locking_script.split(" "):
+                        if not element.startswith("OP") and element == user:
+                            return_dict["total"] = return_dict["total"] + output["amount"]
+                            return_dict["utxos"].append(
+                                {"amount": output["amount"], "transaction_hash": transaction["transaction_hash"]})
+            current_block = current_block.previous_block
+        return return_dict

@@ -1,6 +1,5 @@
 from common.block import Block, BlockHeader
-from common.blockchain_memory import store_blockchain_in_memory
-# from common.merkle_tree import get_merkle_root
+from common.io_blockchain import store_blockchain_in_memory
 from common.values import NUMBER_OF_LEADING_ZEROS
 from node.transaction_validation.transaction_validation import Transaction
 
