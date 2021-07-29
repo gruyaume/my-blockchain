@@ -48,7 +48,7 @@ def test_given_user_points_to_non_existant_utxo_when_process_transaction_then_tr
     output_0 = TransactionOutput(public_key_hash=b"a037a093f0304f159fe1e49cfcfff769eaac7cda", amount=5)
     with pytest.raises(requests.exceptions.HTTPError) as error:
         camille_wallet.process_transaction(inputs=[utxo_0], outputs=[output_0])
-    assert "No transaction with UTXO hash exists" in error.value.response.text
+    assert "Could not find locking script for utxo" in error.value.response.text
 
 
 def test_given_user_points_to_utxo_output_index_not_owned_by_user_when_process_transaction_then_transaction_is_refused(camille_wallet):
@@ -57,7 +57,7 @@ def test_given_user_points_to_utxo_output_index_not_owned_by_user_when_process_t
     output_0 = TransactionOutput(public_key_hash=b"a037a093f0304f159fe1e49cfcfff769eaac7cda", amount=5)
     with pytest.raises(requests.exceptions.HTTPError) as error:
         camille_wallet.process_transaction(inputs=[utxo_0], outputs=[output_0])
-    assert 'UTXO hash/output index combination not valid' in error.value.response.text
+    assert 'Could not find locking script for utxo' in error.value.response.text
 
 
 def test_given_inputs_and_outputs_amounts_dont_match_when_process_transaction_then_transaction_is_refused(camille_wallet):

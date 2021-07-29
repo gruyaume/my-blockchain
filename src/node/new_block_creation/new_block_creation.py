@@ -31,7 +31,8 @@ class ProofOfWork:
         self.blockchain = get_blockchain_from_memory()
         self.new_block = None
 
-    def get_noonce(self, block_header: BlockHeader) -> int:
+    @staticmethod
+    def get_noonce(block_header: BlockHeader) -> int:
         block_header_hash = ""
         noonce = block_header.noonce
         starting_zeros = "".join([str(0) for _ in range(NUMBER_OF_LEADING_ZEROS)])

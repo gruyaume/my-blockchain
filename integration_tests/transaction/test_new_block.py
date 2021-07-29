@@ -71,4 +71,4 @@ def test_given_bad_transactions_in_mem_pool_when_new_block_is_created_then_new_b
     pow.create_new_block()
     with pytest.raises(requests.exceptions.HTTPError) as error:
         pow.broadcast()
-    assert 'No transaction with UTXO hash exists' in error.value.response.text
+    assert 'Could not find locking script for utxo' in error.value.response.text

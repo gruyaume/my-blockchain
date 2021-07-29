@@ -38,26 +38,6 @@ class Transaction:
         self.inputs = transaction["inputs"]
         self.outputs = transaction["outputs"]
 
-    def get_transaction_from_utxo(self, utxo_hash: str) -> dict:
-        current_block = self.blockchain
-        while current_block:
-            for transaction in current_block.transactions:
-                if utxo_hash == transaction["transaction_hash"]:
-                    return transaction
-            current_block = current_block.previous_block
-
-    def get_locking_script_from_utxo(self, utxo_hash: str, utxo_index: int):
-        transaction_data = self.get_transaction_from_utxo(utxo_hash)
-        if transaction_data:
-            try:
-                return transaction_data["outputs"][utxo_index]["locking_script"]
-            except IndexError:
-                print('UTXO hash/output index combination not valid')
-                raise TransactionException(f"{utxo_hash}:{utxo_index}", "UTXO hash/output index combination not valid")
-        else:
-            print('No transaction with UTXO hash exists')
-            raise TransactionException(f"{utxo_hash}:{utxo_index}", "No transaction with UTXO hash exists")
-
     def execute_script(self, unlocking_script, locking_script):
         unlocking_script_list = unlocking_script.split(" ")
         locking_script_list = locking_script.split(" ")
@@ -83,7 +63,10 @@ class Transaction:
         for tx_input in self.inputs:
             transaction_hash = tx_input["transaction_hash"]
             output_index = tx_input["output_index"]
-            locking_script = self.get_locking_script_from_utxo(transaction_hash, output_index)
+            try:
+                locking_script = self.blockchain.get_locking_script_from_utxo(transaction_hash, output_index)
+            except Exception:
+                raise TransactionException(f"{transaction_hash}:{output_index}", "Could not find locking script for utxo")
             try:
                 self.execute_script(tx_input["unlocking_script"], locking_script)
                 self.is_valid = True
@@ -94,7 +77,7 @@ class Transaction:
     def get_total_amount_in_inputs(self) -> int:
         total_in = 0
         for tx_input in self.inputs:
-            transaction_data = self.get_transaction_from_utxo(tx_input["transaction_hash"])
+            transaction_data = self.blockchain.get_transaction_from_utxo(tx_input["transaction_hash"])
             utxo_amount = transaction_data["outputs"][tx_input["output_index"]]["amount"]
             total_in = total_in + utxo_amount
         return total_in

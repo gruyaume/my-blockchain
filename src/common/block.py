@@ -135,3 +135,15 @@ class Block:
                                 {"amount": output["amount"], "transaction_hash": transaction["transaction_hash"]})
             current_block = current_block.previous_block
         return return_dict
+
+    def get_transaction_from_utxo(self, utxo_hash: str) -> dict:
+        current_block = self
+        while current_block:
+            for transaction in current_block.transactions:
+                if utxo_hash == transaction["transaction_hash"]:
+                    return transaction
+            current_block = current_block.previous_block
+
+    def get_locking_script_from_utxo(self, utxo_hash: str, utxo_index: int):
+        transaction_data = self.get_transaction_from_utxo(utxo_hash)
+        return transaction_data["outputs"][utxo_index]["locking_script"]
