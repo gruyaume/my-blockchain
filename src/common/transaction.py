@@ -13,6 +13,15 @@ class Transaction:
     def __init__(self, inputs: [TransactionInput], outputs: [TransactionOutput]):
         self.inputs = inputs
         self.outputs = outputs
+        self.transaction_hash = self.get_transaction_hash()
+
+    def get_transaction_hash(self) -> str:
+        transaction_data = {
+            "inputs": [i.to_dict() for i in self.inputs],
+            "outputs": [i.to_dict() for i in self.outputs]
+        }
+        transaction_bytes = json.dumps(transaction_data, indent=2)
+        return calculate_hash(transaction_bytes)
 
     def sign_transaction_data(self, owner):
         transaction_dict = {"inputs": [tx_input.to_dict(with_unlocking_script=False) for tx_input in self.inputs],
@@ -31,8 +40,7 @@ class Transaction:
     def transaction_data(self) -> dict:
         transaction_data = {
             "inputs": [i.to_dict() for i in self.inputs],
-            "outputs": [i.to_dict() for i in self.outputs]
+            "outputs": [i.to_dict() for i in self.outputs],
+            "transaction_hash": self.transaction_hash
         }
-        transaction_str = json.dumps(transaction_data, indent=2)
-        transaction_data["transaction_hash"] = calculate_hash(transaction_str)
         return transaction_data

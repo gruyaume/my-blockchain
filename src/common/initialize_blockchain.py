@@ -1,4 +1,3 @@
-import json
 from datetime import datetime
 
 from blockchain_users.albert import private_key as albert_private_key
@@ -7,38 +6,14 @@ from blockchain_users.camille import private_key as camille_private_key
 from common.block import Block, BlockHeader
 from common.io_blockchain import store_blockchain_in_memory
 from common.merkle_tree import get_merkle_root
+from common.transaction import Transaction
 from common.transaction_input import TransactionInput
 from common.transaction_output import TransactionOutput
-from common.utils import calculate_hash
 from wallet.wallet import Owner
 
 albert_wallet = Owner(private_key=albert_private_key)
 bertrand_wallet = Owner(private_key=bertrand_private_key)
 camille_wallet = Owner(private_key=camille_private_key)
-
-
-class Transaction:
-    def __init__(self, inputs: [TransactionInput], outputs: [TransactionOutput]):
-        self.inputs = inputs
-        self.outputs = outputs
-        self.transaction_hash = self.get_transaction_hash()
-
-    def get_transaction_hash(self) -> str:
-        transaction_data = {
-            "inputs": [i.to_dict() for i in self.inputs],
-            "outputs": [i.to_dict() for i in self.outputs]
-        }
-        transaction_bytes = json.dumps(transaction_data, indent=2)
-        return calculate_hash(transaction_bytes)
-
-    @property
-    def transaction_data(self) -> dict:
-        transaction_data = {
-            "inputs": [i.to_dict() for i in self.inputs],
-            "outputs": [i.to_dict() for i in self.outputs],
-            "transaction_hash": self.transaction_hash
-        }
-        return transaction_data
 
 
 def initialize_blockchain():
