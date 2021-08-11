@@ -73,8 +73,8 @@ def test_given_bad_signature_when_process_transaction_then_transaction_is_refuse
     utxo_0 = TransactionInput(transaction_hash="e10154f49ae1119777b93e5bcd1a1506b6a89c1f82cc85f63c6cbe83a39df5dc",
                               output_index=0)
     output_0 = TransactionOutput(public_key_hash=b"a037a093f0304f159fe1e49cfcfff769eaac7cda", amount=5)
-    transaction = Transaction(camille, inputs=[utxo_0], outputs=[output_0])
-    transaction.sign()
+    transaction = Transaction(inputs=[utxo_0], outputs=[output_0])
+    transaction.sign(camille)
     node = Node()
     forged_transaction_data = forge_signature(transaction.transaction_data)
     with pytest.raises(requests.exceptions.HTTPError) as error:

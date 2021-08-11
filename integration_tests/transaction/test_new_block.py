@@ -26,8 +26,8 @@ def create_good_transactions(camille):
     utxo_0 = TransactionInput(transaction_hash="e10154f49ae1119777b93e5bcd1a1506b6a89c1f82cc85f63c6cbe83a39df5dc",
                               output_index=0)
     output_0 = TransactionOutput(public_key_hash=b"a037a093f0304f159fe1e49cfcfff769eaac7cda", amount=5)
-    transaction_1 = Transaction(camille, inputs=[utxo_0], outputs=[output_0])
-    transaction_1.sign()
+    transaction_1 = Transaction(inputs=[utxo_0], outputs=[output_0])
+    transaction_1.sign(camille)
     transactions = [transaction_1]
     transactions_str = [transaction.transaction_data for transaction in transactions]
     store_transactions_in_memory(transactions_str)
@@ -38,8 +38,8 @@ def create_bad_transactions(camille):
     utxo_0 = TransactionInput(transaction_hash="5669d7971b76850a4d725c75fbbc20ea97bd1382e2cfae43c41e121ca399b660",
                               output_index=0)
     output_0 = TransactionOutput(public_key_hash=b"a037a093f0304f159fe1e49cfcfff769eaac7cda", amount=25)
-    transaction_1 = Transaction(camille, inputs=[utxo_0], outputs=[output_0])
-    transaction_1.sign()
+    transaction_1 = Transaction(inputs=[utxo_0], outputs=[output_0])
+    transaction_1.sign(camille)
     transactions = [transaction_1]
     transactions_str = [transaction.transaction_data for transaction in transactions]
     store_transactions_in_memory(transactions_str)

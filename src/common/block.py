@@ -5,14 +5,11 @@ from common.utils import calculate_hash
 
 class BlockHeader:
     def __init__(self, previous_block_hash: str, timestamp: float, noonce: int, merkle_root: str, hash: str = ""):
-
         self.previous_block_hash = previous_block_hash
         self.merkle_root = merkle_root
         self.timestamp = timestamp
         self.noonce = noonce
-        self.hash = hash
-        if not self.hash:
-            self.hash = self.get_hash()
+        self.hash = self.get_hash()
 
     def __eq__(self, other):
         try:
@@ -58,7 +55,7 @@ class Block:
             previous_block=None,
     ):
         self.block_header = block_header
-        self.transactions = self.set_transactions_hashes(transactions)
+        self.transactions = transactions
         self.previous_block = previous_block
 
     def __eq__(self, other):
@@ -98,15 +95,15 @@ class Block:
     @property
     def to_json(self) -> str:
         return json.dumps(self.to_dict)
-
-    @staticmethod
-    def set_transactions_hashes(transactions: list) -> list:
-        for transaction in transactions:
-            transaction_data = {"inputs": transaction["inputs"],
-                                "outputs": transaction["outputs"]}
-            transaction_bytes = json.dumps(transaction_data, indent=2).encode('utf-8')
-            transaction["transaction_hash"] = calculate_hash(transaction_bytes)
-        return transactions
+    #
+    # @staticmethod
+    # def set_transactions_hashes(transactions: list) -> list:
+    #     for transaction in transactions:
+    #         transaction_data = {"inputs": transaction["inputs"],
+    #                             "outputs": transaction["outputs"]}
+    #         transaction_str = json.dumps(transaction_data, indent=2)
+    #         transaction["transaction_hash"] = calculate_hash(transaction_str)
+    #     return transactions
 
     def get_transaction(self, transaction_hash: dict) -> dict:
         current_block = self
