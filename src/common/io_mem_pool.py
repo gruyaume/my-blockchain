@@ -4,7 +4,7 @@ import json
 FILENAME = "src/doc/mem_pool"
 
 
-def get_transactions_from_memory():
+def get_transactions_from_memory() -> list:
     with open(FILENAME, "rb") as file_obj:
         current_mem_pool_str = file_obj.read()
         current_mem_pool_list = json.loads(current_mem_pool_str)

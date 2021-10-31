@@ -2,7 +2,7 @@ import json
 
 
 class TransactionOutput:
-    def __init__(self, public_key_hash: bytes, amount: int):
+    def __init__(self, public_key_hash: bytes, amount: float):
         self.amount = amount
         self.locking_script = f"OP_DUP OP_HASH160 {public_key_hash} OP_EQUAL_VERIFY OP_CHECKSIG"
 

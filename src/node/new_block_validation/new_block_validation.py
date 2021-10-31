@@ -2,6 +2,7 @@ from common.block import Block, BlockHeader
 from common.io_blockchain import store_blockchain_in_memory
 from common.values import NUMBER_OF_LEADING_ZEROS
 from node.transaction_validation.transaction_validation import Transaction
+from common.block_reward import BLOCK_REWARD
 
 
 class NewBlockException(Exception):
@@ -38,12 +39,19 @@ class NewBlock:
             raise NewBlockException("", "Proof of work validation failed")
 
     def _validate_transactions(self):
-
+        input_amount = 0
+        output_amount = 0
         for transaction in self.new_block.transactions:
             transaction_validation = Transaction(self.blockchain)
             transaction_validation.receive(transaction=transaction)
             transaction_validation.validate()
-            transaction_validation.validate_funds()
+            input_amount = input_amount + transaction_validation.get_total_amount_in_inputs()
+            output_amount = output_amount + transaction_validation.get_total_amount_in_outputs()
+        self._validate_funds(input_amount, output_amount)
+
+    @staticmethod
+    def _validate_funds(input_amount: float, output_amount: float):
+        assert input_amount + BLOCK_REWARD == output_amount
 
     def add(self):
         self.new_block.previous_block = self.blockchain
