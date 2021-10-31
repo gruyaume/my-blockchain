@@ -11,6 +11,7 @@ The goal of this project is to provide code to support a tutorial on blockchains
 5. [Transaction scripts](https://gruyaume.medium.com/create-your-own-blockchain-using-python-pt-5-d90cff185380)
 6. [The network](https://gruyaume.medium.com/create-your-own-blockchain-using-python-pt-6-d00e06c1c9db)
 7. [New Block Creation and Proof-of-Work](https://gruyaume.medium.com/create-your-own-blockchain-using-python-pt-7-6cdcb44697fe)
+8. Incentive
 
 ## Requirements
 
@@ -45,3 +46,13 @@ pytest integration_tests
 
 Note that you can change the HTTP port that your flask app listens on by adding the `--port` option to `flask run`.
 Example: `flask run --port 5002`
+
+## New blockchain user 
+In the current implementation there are 4 users of the blockchain: albert, bertrand, camille and the miner. To create a 
+new user, you will have to generate a new public/private key pair. To do so, you can simply run the 
+"new_user_creation.py" script inside of the `common` directory:
+```bash
+export PYTHONPATH=src
+python src/common/new_user_creation.py 
+```
+The output will simply print you new public/private keys that you will be able to use 

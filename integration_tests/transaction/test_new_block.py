@@ -65,6 +65,29 @@ def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_
     assert new_block.block_header.hash == pow.new_block.block_header.hash
 
 
+def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_block_contains_new_transactions_and_coinbase(
+        create_good_transactions):
+    initialize_blockchain()
+    pow = ProofOfWork()
+    pow.create_new_block()
+    pow.broadcast()
+    new_block = get_blockchain_from_memory()
+
+    assert len(new_block.transactions) == 2
+    assert new_block.transactions[0]["outputs"] == [
+        {
+            'amount': 5,
+            'locking_script': "OP_DUP OP_HASH160 b'a037a093f0304f159fe1e49cfcfff769eaac7cda' OP_EQUAL_VERIFY OP_CHECKSIG"
+        }
+    ]
+    assert new_block.transactions[1]["outputs"] == [
+        {
+            'amount': 6.25,
+            'locking_script': 'OP_DUP OP_HASH160 4d9715dc8f9578ca2af159409be9c559c5eaceba OP_EQUAL_VERIFY OP_CHECKSIG'
+         }
+    ]
+
+
 def test_given_bad_transactions_in_mem_pool_when_new_block_is_created_then_new_block_is_refused(create_bad_transactions):
     initialize_blockchain()
     pow = ProofOfWork()
