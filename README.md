@@ -26,19 +26,13 @@ Install libraries with pip:
 Run unit tests locally by running the following:
 ```bash
 pip3 install tox
-tox
+tox -e unit
 ```
 
 ## Integration tests
 Integration tests allow to complete transactions from the wallet to the node.
 
-1. Start the node's flask server:
-```bash
-export FLASK_APP=src/node/main.py
-flask run
-```
-
-2. On another terminal window, run integration tests:
+Run integration tests:
 ```bash
 export PYTHONPATH=src
 pytest integration_tests
@@ -55,4 +49,4 @@ new user, you will have to generate a new public/private key pair. To do so, you
 export PYTHONPATH=src
 python src/common/new_user_creation.py 
 ```
-The output will simply print you new public/private keys that you will be able to use 
+The output will simply print you new public/private keys that you will be able to use.

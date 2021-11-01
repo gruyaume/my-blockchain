@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 
 from common.network import Network
@@ -33,6 +35,14 @@ class TestNetwork:
         nodes = network.known_nodes
         assert len(nodes) == 1
 
-    def test_given_known_hosts_when_advertise_to_all_known_nodes_then_http_post_is_sent_to_all_known_hosts(self):
-        # TODO
-        raise
+    @patch("requests.post")
+    def test_given_known_hosts_when_advertise_to_all_known_nodes_then_http_post_is_sent_to_all_known_hosts(self, mock_post, self_node):
+        network = Network(self_node)
+
+        network.advertise_to_all_known_nodes()
+
+        args, kwargs = mock_post.call_args
+
+        assert mock_post.call_count == 1
+        assert args[0] == f"http://{Network.FIRST_KNOWN_NODE_IP}:{Network.FIRST_KNOWN_NODE_PORT}/new_node_advertisement"
+        assert kwargs["json"] == {'ip': self_node.ip, 'port': self_node.port}

@@ -2,17 +2,19 @@ from flask import Flask, request, jsonify
 
 from common.initialize_blockchain import initialize_blockchain
 from common.io_blockchain import get_blockchain_from_memory
-from common.network import Network, join_network
+from common.network import Network
+from common.node import Node
 from node.new_block_validation.new_block_validation import NewBlock, NewBlockException
 from node.transaction_validation.transaction_validation import Transaction, TransactionException
-from common.node import Node
 
-app = Flask(__name__)
-initialize_blockchain()
-join_network()
 MY_IP = "127.0.0.1"
 MY_PORT = 5000
 MY_NODE = Node(MY_IP, MY_PORT)
+
+network = Network(MY_NODE)
+initialize_blockchain()
+network.join_network()
+app = Flask(__name__)
 
 
 @app.route("/block", methods=['POST'])
@@ -64,11 +66,32 @@ def get_transaction(transaction_hash):
 
 
 @app.route("/new_node_advertisement", methods=['POST'])
-def new_node_advertisement(ip, port):
+def new_node_advertisement():
+    content = request.json
+    ip = content["ip"]
+    port = content["port"]
+    print(f'ip: {ip}')
     try:
         new_node = Node(ip, port)
-        network = Network(MY_NODE)
         network.store_new_node(new_node)
     except TransactionException as transaction_exception:
         return f'{transaction_exception}', 400
     return "New node advertisement success", 200
+
+
+@app.route("/known_node_request", methods=['GET'])
+def known_node_request(ip, port):
+    inquiring_node = Node(ip, port)
+    node_is_known = network.validate_node_is_known(inquiring_node)
+    if node_is_known:
+        return jsonify(network.return_known_nodes())
+    else:
+        return f'You are not known', 400
+
+
+def main():
+    app.run()
+
+
+if __name__ == "__main__":
+    main()

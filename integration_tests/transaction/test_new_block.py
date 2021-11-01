@@ -7,6 +7,7 @@ from common.io_blockchain import get_blockchain_from_memory
 from common.io_mem_pool import store_transactions_in_memory
 from common.transaction_input import TransactionInput
 from common.transaction_output import TransactionOutput
+from integration_tests.common.flask import Server
 from node.new_block_creation.new_block_creation import ProofOfWork
 from wallet.wallet import Owner, Wallet, Transaction
 
@@ -45,34 +46,46 @@ def create_bad_transactions(camille):
     store_transactions_in_memory(transactions_str)
 
 
+@pytest.fixture(scope="module")
+def server() -> Server:
+    server_ip = "127.0.0.1"
+    server_port = 5000
+    server = Server(server_ip, server_port)
+    return server
+
+
 def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_block_is_accepted(
-        create_good_transactions):
-    initialize_blockchain()
+        create_good_transactions, server):
+    server.start()
     pow = ProofOfWork()
     pow.create_new_block()
     pow.broadcast()
+    server.stop()
 
 
 def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_block_is_added_to_current_blockchain(
-        create_good_transactions):
+        create_good_transactions, server):
     initialize_blockchain()
+    server.start()
     initial_blockchain = get_blockchain_from_memory()
     pow = ProofOfWork()
     pow.create_new_block()
     pow.broadcast()
     new_block = get_blockchain_from_memory()
+    server.stop()
     assert len(new_block) == len(initial_blockchain) + 1
     assert new_block.block_header.hash == pow.new_block.block_header.hash
 
 
 def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_block_contains_new_transactions_and_coinbase(
-        create_good_transactions):
+        create_good_transactions, server):
     initialize_blockchain()
+    server.start()
     pow = ProofOfWork()
     pow.create_new_block()
     pow.broadcast()
     new_block = get_blockchain_from_memory()
-
+    server.stop()
     assert len(new_block.transactions) == 2
     assert new_block.transactions[0]["outputs"] == [
         {
@@ -88,10 +101,13 @@ def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_
     ]
 
 
-def test_given_bad_transactions_in_mem_pool_when_new_block_is_created_then_new_block_is_refused(create_bad_transactions):
+def test_given_bad_transactions_in_mem_pool_when_new_block_is_created_then_new_block_is_refused(
+        create_bad_transactions, server):
     initialize_blockchain()
+    server.start()
     pow = ProofOfWork()
     pow.create_new_block()
     with pytest.raises(requests.exceptions.HTTPError) as error:
         pow.broadcast()
     assert 'Could not find locking script for utxo' in error.value.response.text
+    server.stop()
