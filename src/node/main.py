@@ -7,14 +7,11 @@ from common.node import Node
 from node.new_block_validation.new_block_validation import NewBlock, NewBlockException
 from node.transaction_validation.transaction_validation import Transaction, TransactionException
 
-MY_IP = "127.0.0.1"
-MY_PORT = 5000
-MY_NODE = Node(MY_IP, MY_PORT)
 
-network = Network(MY_NODE)
-initialize_blockchain()
-network.join_network()
 app = Flask(__name__)
+
+MY_IP = '127.0.0.1'
+MY_PORT = 5000
 
 
 @app.route("/block", methods=['POST'])
@@ -70,7 +67,6 @@ def new_node_advertisement():
     content = request.json
     ip = content["ip"]
     port = content["port"]
-    print(f'ip: {ip}')
     try:
         new_node = Node(ip, port)
         network.store_new_node(new_node)
@@ -80,7 +76,10 @@ def new_node_advertisement():
 
 
 @app.route("/known_node_request", methods=['GET'])
-def known_node_request(ip, port):
+def known_node_request():
+    content = request.json
+    ip = content["ip"]
+    port = content["port"]
     inquiring_node = Node(ip, port)
     node_is_known = network.validate_node_is_known(inquiring_node)
     if node_is_known:
@@ -90,7 +89,12 @@ def known_node_request(ip, port):
 
 
 def main():
-    app.run()
+    global network
+    my_node = Node(MY_IP, MY_PORT)
+    network = Network(my_node)
+    # initialize_blockchain()
+    network.join_network()
+    app.run(host=MY_IP, debug=True, port=MY_PORT)
 
 
 if __name__ == "__main__":

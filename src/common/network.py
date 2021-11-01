@@ -17,7 +17,7 @@ class Network:
     def initialize_known_nodes_file(self):
         print("Initializing known nodes file")
         initial_known_node = Node(ip=self.FIRST_KNOWN_NODE_IP, port=self.FIRST_KNOWN_NODE_PORT)
-        with open(self.KNOWN_NODES_FILE, "w+") as jsonFile:
+        with open(self.KNOWN_NODES_FILE, "w") as jsonFile:
             json.dump([initial_known_node.dict], jsonFile)
 
     def advertise_to_all_known_nodes(self):
@@ -49,10 +49,11 @@ class Network:
 
     def join_network(self):
         print("Joining network")
+
         try:
             self.advertise_to_all_known_nodes()
             self.ask_known_nodes_for_their_known_nodes()
-        except requests.exceptions.ConnectionError:
+        except:
             print("Connection error when trying to join network. This could be caused by a network "
                   "issue or because we are the first node out here.")
 

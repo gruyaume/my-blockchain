@@ -22,6 +22,35 @@ Python 3.8
 Install libraries with pip:
 `pip3 install -r requirements.txt`
 
+## Deployment
+
+A docker image is provided on docker hub [here](https://hub.docker.com/repository/docker/gruyaume/my-blockchain). 
+You can deploy multiple instances of a blockchain node like so:
+
+```bash
+docker run -d --name my-blockchain-0 -p 5000:5000  gruyaume/my-blockchain:1.0.0
+docker run -d --name my-blockchain-1 -p 5001:5000  gruyaume/my-blockchain:1.0.0
+docker run -d --name my-blockchain-2 -p 5002:5000  gruyaume/my-blockchain:1.0.0
+```
+
+You can specify whichever port you want to be exposed (here we use `5000`, `5001` and `5002`) but Flask
+itself listens on port 5000. This can't be changed.
+
+### Validation
+
+Use `docker ps` to validate that all 3 nodes are deployed properly.
+```bash
+(venv) guillaume@thinkpad:~/PycharmProjects/my-blockchain$ docker ps
+CONTAINER ID   IMAGE                          COMMAND                  CREATED              STATUS              PORTS                                       NAMES
+80792eb022c6   gruyaume/my-blockchain:1.0.0   "python3 -m flask ru…"   4 seconds ago        Up 3 seconds        0.0.0.0:5002->5000/tcp, :::5002->5000/tcp   my-blockchain-2
+76cd1174e69b   gruyaume/my-blockchain:1.0.0   "python3 -m flask ru…"   About a minute ago   Up About a minute   0.0.0.0:5001->5000/tcp, :::5001->5000/tcp   my-blockchain-1
+86bdd89ab634   gruyaume/my-blockchain:1.0.0   "python3 -m flask ru…"   About a minute ago   Up About a minute   0.0.0.0:5000->5000/tcp, :::5000->5000/tcp   my-blockchain-0
+```
+
+You can use Postman to query `http://127.0.0.1:5000/block` (as well as ports `5001` and `5002`) and
+you should be receiving an answer in all cases.
+
+
 ## Unit tests
 Run unit tests locally by running the following:
 ```bash
