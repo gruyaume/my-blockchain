@@ -4,10 +4,8 @@ import requests
 
 from common.block import Block
 from common.io_mem_pool import get_transactions_from_memory, store_transactions_in_memory
-from common.node import Node
+from common.network import Network
 from node.transaction_validation.script import StackScript
-
-FILENAME = "src/doc/mem_pool"
 
 
 class TransactionException(Exception):
@@ -16,17 +14,10 @@ class TransactionException(Exception):
         self.message = message
 
 
-class OtherNode(Node):
-    def __init__(self, ip: str, port: int):
-        super().__init__(ip, port)
-
-    def send_transaction(self, transaction_data: dict) -> requests.Response:
-        return self.post("transactions", transaction_data)
-
-
 class Transaction:
-    def __init__(self, blockchain: Block):
+    def __init__(self, blockchain: Block, network: Network):
         self.blockchain = blockchain
+        self.network = network
         self.transaction_data = {}
         self.inputs = []
         self.outputs = []
@@ -37,6 +28,13 @@ class Transaction:
         self.transaction_data = transaction
         self.inputs = transaction["inputs"]
         self.outputs = transaction["outputs"]
+
+    @property
+    def is_new(self):
+        current_transactions = get_transactions_from_memory()
+        if self.transaction_data in current_transactions:
+            return False
+        return True
 
     def execute_script(self, unlocking_script, locking_script):
         unlocking_script_list = unlocking_script.split(" ")
@@ -59,7 +57,6 @@ class Transaction:
                 stack_script.push(element)
 
     def validate(self):
-
         for tx_input in self.inputs:
             transaction_hash = tx_input["transaction_hash"]
             output_index = tx_input["output_index"]
@@ -101,12 +98,13 @@ class Transaction:
                                        "Transaction inputs and outputs did not match")
 
     def broadcast(self):
-        node_list = [OtherNode("127.0.0.1", 5001), OtherNode("127.0.0.1", 5002)]
+        node_list = self.network.known_nodes
         for node in node_list:
-            try:
-                node.send_transaction(self.transaction_data)
-            except requests.ConnectionError:
-                pass
+            if node.hostname != self.network.node.hostname:
+                try:
+                    node.send_transaction(self.transaction_data)
+                except requests.ConnectionError:
+                    pass
 
     def store(self):
         if self.is_valid and self.is_funds_sufficient:

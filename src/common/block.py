@@ -4,7 +4,7 @@ from common.utils import calculate_hash
 
 
 class BlockHeader:
-    def __init__(self, previous_block_hash: str, timestamp: float, noonce: int, merkle_root: str, hash: str = ""):
+    def __init__(self, previous_block_hash: str, timestamp: float, noonce: int, merkle_root: str):
         self.previous_block_hash = previous_block_hash
         self.merkle_root = merkle_root
         self.timestamp = timestamp
@@ -36,7 +36,6 @@ class BlockHeader:
             "merkle_root": self.merkle_root,
             "timestamp": self.timestamp,
             "noonce": self.noonce,
-            "hash": self.hash
         }
 
     def __str__(self):
@@ -95,15 +94,6 @@ class Block:
     @property
     def to_json(self) -> str:
         return json.dumps(self.to_dict)
-    #
-    # @staticmethod
-    # def set_transactions_hashes(transactions: list) -> list:
-    #     for transaction in transactions:
-    #         transaction_data = {"inputs": transaction["inputs"],
-    #                             "outputs": transaction["outputs"]}
-    #         transaction_str = json.dumps(transaction_data, indent=2)
-    #         transaction["transaction_hash"] = calculate_hash(transaction_str)
-    #     return transactions
 
     def get_transaction(self, transaction_hash: dict) -> dict:
         current_block = self
@@ -129,7 +119,11 @@ class Block:
                         if not element.startswith("OP") and element == user:
                             return_dict["total"] = return_dict["total"] + output["amount"]
                             return_dict["utxos"].append(
-                                {"amount": output["amount"], "transaction_hash": transaction["transaction_hash"]})
+                                {
+                                    "amount": output["amount"],
+                                    "transaction_hash": transaction["transaction_hash"]
+                                }
+                            )
             current_block = current_block.previous_block
         return return_dict
 

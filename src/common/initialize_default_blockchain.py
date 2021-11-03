@@ -16,7 +16,8 @@ bertrand_wallet = Owner(private_key=bertrand_private_key)
 camille_wallet = Owner(private_key=camille_private_key)
 
 
-def initialize_blockchain():
+def initialize_default_blockchain():
+    print("Initializing default blockchain")
     timestamp_0 = datetime.timestamp(datetime.fromisoformat('2011-11-04 00:05:23.111'))
     input_0 = TransactionInput(transaction_hash="abcd1234",
                                output_index=0)

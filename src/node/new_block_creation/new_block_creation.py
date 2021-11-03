@@ -1,15 +1,13 @@
 import json
 from datetime import datetime
 
-import requests
-
 from blockchain_users.miner import private_key as miner_private_key
 from common.block import Block, BlockHeader
 from common.block_reward import BLOCK_REWARD
 from common.io_blockchain import get_blockchain_from_memory
 from common.io_mem_pool import get_transactions_from_memory
 from common.merkle_tree import get_merkle_root
-from common.node import Node
+from common.network import Network
 from common.owner import Owner
 from common.transaction_output import TransactionOutput
 from common.utils import calculate_hash
@@ -22,16 +20,9 @@ class BlockException(Exception):
         self.message = message
 
 
-class OtherNode(Node):
-    def __init__(self, ip: str, port: int):
-        super().__init__(ip, port)
-
-    def send_new_block(self, block: dict) -> requests.Response:
-        return self.post(endpoint="block", data=block)
-
-
 class ProofOfWork:
-    def __init__(self):
+    def __init__(self, network: Network):
+        self.network = network
         self.blockchain = get_blockchain_from_memory()
         self.new_block = None
 
@@ -95,12 +86,13 @@ class ProofOfWork:
                 "outputs": [transaction_output.to_dict()]}
 
     def broadcast(self):
-        node_list = [OtherNode("127.0.0.1", 5000)]
+        node_list = self.network.known_nodes
         for node in node_list:
-            block_content = {
-                "block": {
-                    "header": self.new_block.block_header.to_dict,
-                    "transactions": self.new_block.transactions
+            if node.hostname != self.network.node.hostname:
+                block_content = {
+                    "block": {
+                        "header": self.new_block.block_header.to_dict,
+                        "transactions": self.new_block.transactions
+                    }
                 }
-            }
-            node.send_new_block(block_content)
+                node.send_new_block(block_content)
