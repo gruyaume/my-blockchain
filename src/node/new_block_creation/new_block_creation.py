@@ -1,20 +1,17 @@
 import json
 from datetime import datetime
 
-import requests
-
 from blockchain_users.miner import private_key as miner_private_key
 from common.block import Block, BlockHeader
 from common.block_reward import BLOCK_REWARD
 from common.io_blockchain import get_blockchain_from_memory
 from common.io_mem_pool import get_transactions_from_memory
 from common.merkle_tree import get_merkle_root
-from common.node import Node
+from common.network import Network
 from common.owner import Owner
 from common.transaction_output import TransactionOutput
 from common.utils import calculate_hash
 from common.values import NUMBER_OF_LEADING_ZEROS
-from common.network import Network
 
 
 class BlockException(Exception):
