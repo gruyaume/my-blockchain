@@ -4,8 +4,8 @@ import requests
 from blockchain_users.camille import private_key as camille_private_key
 from common.transaction_input import TransactionInput
 from common.transaction_output import TransactionOutput
-from wallet.wallet import Owner, Wallet, Node, Transaction
 from integration_tests.common.flask import Server
+from wallet.wallet import Owner, Wallet, Node, Transaction
 
 
 @pytest.fixture(scope="module")
@@ -20,9 +20,7 @@ def camille_wallet(camille):
 
 @pytest.fixture(scope="module")
 def server() -> Server:
-    server_ip = "127.0.0.1"
-    server_port = 5000
-    server = Server(server_ip, server_port)
+    server = Server()
     return server
 
 

@@ -5,9 +5,7 @@ from node.main import main
 
 
 class Server:
-    def __init__(self, ip, port):
-        self.ip = ip
-        self.port = port
+    def __init__(self):
         self.server = None
 
     def start(self):

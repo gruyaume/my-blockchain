@@ -3,6 +3,7 @@ from common.io_blockchain import store_blockchain_in_memory
 from common.values import NUMBER_OF_LEADING_ZEROS
 from node.transaction_validation.transaction_validation import Transaction
 from common.block_reward import BLOCK_REWARD
+from common.network import Network
 
 
 class NewBlockException(Exception):
@@ -12,8 +13,9 @@ class NewBlockException(Exception):
 
 
 class NewBlock:
-    def __init__(self, blockchain: Block):
+    def __init__(self, blockchain: Block, network: Network):
         self.blockchain = blockchain
+        self.network = network
         self.new_block = None
 
     def receive(self, new_block: dict):
@@ -42,7 +44,7 @@ class NewBlock:
         input_amount = 0
         output_amount = 0
         for transaction in self.new_block.transactions:
-            transaction_validation = Transaction(self.blockchain)
+            transaction_validation = Transaction(self.blockchain, self.network)
             transaction_validation.receive(transaction=transaction)
             transaction_validation.validate()
             input_amount = input_amount + transaction_validation.get_total_amount_in_inputs()

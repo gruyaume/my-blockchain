@@ -7,11 +7,13 @@ from common.node import Node
 from node.new_block_validation.new_block_validation import NewBlock, NewBlockException
 from node.transaction_validation.transaction_validation import Transaction, TransactionException
 
-
 app = Flask(__name__)
 
-MY_IP = '127.0.0.1'
-MY_PORT = 5000
+MY_HOSTNAME = "127.0.0.1:5000"
+my_node = Node(MY_HOSTNAME)
+network = Network(my_node)
+initialize_blockchain()
+network.join_network()
 
 
 @app.route("/block", methods=['POST'])
@@ -19,7 +21,7 @@ def validate_block():
     content = request.json
     blockchain_base = get_blockchain_from_memory()
     try:
-        new_block = NewBlock(blockchain_base)
+        new_block = NewBlock(blockchain_base, network)
         new_block.receive(new_block=content["block"])
         new_block.validate()
         new_block.add()
@@ -33,7 +35,7 @@ def validate_transaction():
     content = request.json
     blockchain_base = get_blockchain_from_memory()
     try:
-        transaction_validation = Transaction(blockchain_base)
+        transaction_validation = Transaction(blockchain_base, network)
         transaction_validation.receive(transaction=content["transaction"])
         transaction_validation.validate()
         transaction_validation.validate_funds()
@@ -65,10 +67,9 @@ def get_transaction(transaction_hash):
 @app.route("/new_node_advertisement", methods=['POST'])
 def new_node_advertisement():
     content = request.json
-    ip = content["ip"]
-    port = content["port"]
+    hostname = content["hostname"]
     try:
-        new_node = Node(ip, port)
+        new_node = Node(hostname)
         network.store_new_node(new_node)
     except TransactionException as transaction_exception:
         return f'{transaction_exception}', 400
@@ -77,24 +78,16 @@ def new_node_advertisement():
 
 @app.route("/known_node_request", methods=['GET'])
 def known_node_request():
-    content = request.json
-    ip = content["ip"]
-    port = content["port"]
-    inquiring_node = Node(ip, port)
-    node_is_known = network.validate_node_is_known(inquiring_node)
-    if node_is_known:
-        return jsonify(network.return_known_nodes())
-    else:
-        return f'You are not known', 400
+    return jsonify(network.return_known_nodes())
 
 
 def main():
     global network
-    my_node = Node(MY_IP, MY_PORT)
+    my_node = Node(MY_HOSTNAME)
     network = Network(my_node)
-    # initialize_blockchain()
+    initialize_blockchain()
     network.join_network()
-    app.run(host=MY_IP, debug=True, port=MY_PORT)
+    app.run()
 
 
 if __name__ == "__main__":

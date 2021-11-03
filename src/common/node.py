@@ -2,19 +2,17 @@ import requests
 
 
 class Node:
-    def __init__(self, ip: str, port: int):
-        self.ip = ip
-        self.port = port
-        self.base_url = f"http://{ip}:{port}/"
+    def __init__(self, hostname: str):
+        self.hostname = hostname
+        self.base_url = f"http://{hostname}/"
 
     def __eq__(self, other):
-        return self.ip == other.ip and self.port == other.port
+        return self.hostname == other.hostname
 
     @property
     def dict(self):
         return {
-            "ip": self.ip,
-            "port": self.port
+            "hostname": self.hostname
         }
 
     def post(self, endpoint: str, data: dict) -> requests.Response:
@@ -27,12 +25,18 @@ class Node:
         url = f"{self.base_url}{endpoint}"
         req_return = requests.get(url, json=data)
         req_return.raise_for_status()
-        return req_return
+        return req_return.json()
 
-    def advertise(self, ip, port):
-        data = {"ip": ip, "port": port}
+    def advertise(self, hostname: str):
+        data = {"hostname": hostname}
         return self.post(endpoint="new_node_advertisement", data=data)
 
-    def known_node_request(self, ip, port):
-        data = {"ip": ip, "port": port}
+    def known_node_request(self, hostname: str):
+        data = {"hostname": hostname}
         return self.get(endpoint="known_node_request", data=data)
+
+    def send_new_block(self, block: dict) -> requests.Response:
+        return self.post(endpoint="block", data=block)
+
+    def send_transaction(self, transaction_data: dict) -> requests.Response:
+        return self.post("transactions", transaction_data)

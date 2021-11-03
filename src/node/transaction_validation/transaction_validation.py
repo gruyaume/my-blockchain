@@ -6,8 +6,10 @@ from common.block import Block
 from common.io_mem_pool import get_transactions_from_memory, store_transactions_in_memory
 from common.node import Node
 from node.transaction_validation.script import StackScript
+from common.network import Network
 
-FILENAME = "src/doc/mem_pool"
+
+# FILENAME = "src/doc/mem_pool"
 
 
 class TransactionException(Exception):
@@ -16,17 +18,10 @@ class TransactionException(Exception):
         self.message = message
 
 
-class OtherNode(Node):
-    def __init__(self, ip: str, port: int):
-        super().__init__(ip, port)
-
-    def send_transaction(self, transaction_data: dict) -> requests.Response:
-        return self.post("transactions", transaction_data)
-
-
 class Transaction:
-    def __init__(self, blockchain: Block):
+    def __init__(self, blockchain: Block, network: Network):
         self.blockchain = blockchain
+        self.network = network
         self.transaction_data = {}
         self.inputs = []
         self.outputs = []
@@ -101,12 +96,13 @@ class Transaction:
                                        "Transaction inputs and outputs did not match")
 
     def broadcast(self):
-        node_list = [OtherNode("127.0.0.1", 5001), OtherNode("127.0.0.1", 5002)]
+        node_list = self.network.known_nodes
         for node in node_list:
-            try:
-                node.send_transaction(self.transaction_data)
-            except requests.ConnectionError:
-                pass
+            if node.hostname != self.network.node.hostname:
+                try:
+                    node.send_transaction(self.transaction_data)
+                except requests.ConnectionError:
+                    pass
 
     def store(self):
         if self.is_valid and self.is_funds_sufficient:
