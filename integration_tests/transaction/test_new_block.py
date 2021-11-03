@@ -2,7 +2,6 @@ import pytest
 import requests
 
 from blockchain_users.camille import private_key as camille_private_key
-from common.initialize_blockchain import initialize_blockchain
 from common.io_blockchain import get_blockchain_from_memory
 from common.io_mem_pool import store_transactions_in_memory
 from common.transaction_input import TransactionInput
@@ -72,7 +71,6 @@ def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_
 
 def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_block_is_added_to_current_blockchain(
         create_good_transactions, server, network):
-    initialize_blockchain()
     server.start()
     initial_blockchain = get_blockchain_from_memory()
     pow = ProofOfWork(network)
@@ -86,7 +84,6 @@ def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_
 
 def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_block_contains_new_transactions_and_coinbase(
         create_good_transactions, server, network):
-    initialize_blockchain()
     server.start()
     pow = ProofOfWork(network)
     pow.create_new_block()
@@ -110,7 +107,6 @@ def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_
 
 def test_given_bad_transactions_in_mem_pool_when_new_block_is_created_then_new_block_is_refused(
         create_bad_transactions, server, network):
-    initialize_blockchain()
     server.start()
     pow = ProofOfWork(network)
     pow.create_new_block()

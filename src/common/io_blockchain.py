@@ -20,6 +20,10 @@ def get_blockchain_from_memory():
 
 
 def store_blockchain_in_memory(blockchain: Block):
-    text = json.dumps(blockchain.to_dict).encode("utf-8")
+    store_blockchain_dict_in_memory(blockchain.to_dict)
+
+
+def store_blockchain_dict_in_memory(blockchain_list: list):
+    text = json.dumps(blockchain_list).encode("utf-8")
     with open(FILENAME, "wb") as file_obj:
         file_obj.write(text)

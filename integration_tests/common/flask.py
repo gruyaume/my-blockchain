@@ -11,7 +11,7 @@ class Server:
     def start(self):
         self.server = Process(target=main)
         self.server.start()
-        time.sleep(1)
+        time.sleep(0.5)
 
     def stop(self):
         self.server.terminate()

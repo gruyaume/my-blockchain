@@ -58,3 +58,15 @@ class NewBlock:
     def add(self):
         self.new_block.previous_block = self.blockchain
         store_blockchain_in_memory(self.new_block)
+
+    def broadcast(self):
+        node_list = self.network.known_nodes
+        for node in node_list:
+            if node.hostname != self.network.node.hostname:
+                block_content = {
+                    "block": {
+                        "header": self.new_block.block_header.to_dict,
+                        "transactions": self.new_block.transactions
+                    }
+                }
+                node.send_new_block(block_content)

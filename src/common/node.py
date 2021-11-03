@@ -21,9 +21,12 @@ class Node:
         req_return.raise_for_status()
         return req_return
 
-    def get(self, endpoint: str, data: dict) -> requests.Response:
+    def get(self, endpoint: str, data: dict = None) -> list:
         url = f"{self.base_url}{endpoint}"
-        req_return = requests.get(url, json=data)
+        if data:
+            req_return = requests.get(url, json=data)
+        else:
+            req_return = requests.get(url)
         req_return.raise_for_status()
         return req_return.json()
 
@@ -40,3 +43,6 @@ class Node:
 
     def send_transaction(self, transaction_data: dict) -> requests.Response:
         return self.post("transactions", transaction_data)
+
+    def get_blockchain(self) -> list:
+        return self.get(endpoint="block")

@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify
 
-from common.initialize_blockchain import initialize_blockchain
 from common.io_blockchain import get_blockchain_from_memory
 from common.network import Network
 from common.node import Node
@@ -12,7 +11,6 @@ app = Flask(__name__)
 MY_HOSTNAME = "127.0.0.1:5000"
 my_node = Node(MY_HOSTNAME)
 network = Network(my_node)
-initialize_blockchain()
 network.join_network()
 
 
@@ -21,10 +19,11 @@ def validate_block():
     content = request.json
     blockchain_base = get_blockchain_from_memory()
     try:
-        new_block = NewBlock(blockchain_base, network)
-        new_block.receive(new_block=content["block"])
-        new_block.validate()
-        new_block.add()
+        block = NewBlock(blockchain_base, network)
+        block.receive(new_block=content["block"])
+        block.validate()
+        block.add()
+        block.broadcast()
     except (NewBlockException, TransactionException) as new_block_exception:
         return f'{new_block_exception}', 400
     return "Transaction success", 200
@@ -35,12 +34,13 @@ def validate_transaction():
     content = request.json
     blockchain_base = get_blockchain_from_memory()
     try:
-        transaction_validation = Transaction(blockchain_base, network)
-        transaction_validation.receive(transaction=content["transaction"])
-        transaction_validation.validate()
-        transaction_validation.validate_funds()
-        transaction_validation.broadcast()
-        transaction_validation.store()
+        transaction = Transaction(blockchain_base, network)
+        transaction.receive(transaction=content["transaction"])
+        if transaction.is_new:
+            transaction.validate()
+            transaction.validate_funds()
+            transaction.broadcast()
+            transaction.store()
     except TransactionException as transaction_exception:
         return f'{transaction_exception}', 400
     return "Transaction success", 200
@@ -85,7 +85,6 @@ def main():
     global network
     my_node = Node(MY_HOSTNAME)
     network = Network(my_node)
-    initialize_blockchain()
     network.join_network()
     app.run()
 

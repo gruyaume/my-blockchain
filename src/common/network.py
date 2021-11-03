@@ -3,6 +3,8 @@ import json
 import requests
 
 from common.node import Node
+from common.io_blockchain import store_blockchain_dict_in_memory
+from common.initialize_default_blockchain import initialize_default_blockchain
 
 
 class Network:
@@ -21,9 +23,11 @@ class Network:
             json.dump([initial_known_node.dict], jsonFile)
 
     def advertise_to_all_known_nodes(self):
-        print("advertising to all known nodes")
+        print("Advertising to all known nodes")
         for node in self.known_nodes:
-            node.advertise(self.node.hostname)
+            if node.hostname != self.node.hostname:
+                node.advertise(self.node.hostname)
+        print("ok")
 
     def ask_known_nodes_for_their_known_nodes(self) -> list:
         print("Asking known nodes for their own known nodes")
@@ -55,20 +59,42 @@ class Network:
         for node in nodes:
             self.store_new_node(node)
 
+    def initialize_blockchain(self):
+        longest_blockchain = self.get_longest_blockchain()
+        store_blockchain_dict_in_memory(longest_blockchain)
+
+    def get_longest_blockchain(self):
+        longest_blockchain_size = 0
+        longest_blockchain = None
+        for node in self.known_nodes:
+            if node.hostname != self.node.hostname:
+                blockchain = node.get_blockchain()
+                blockchain_length = len(blockchain)
+                if blockchain_length > longest_blockchain_size:
+                    longest_blockchain_size = blockchain_length
+                    longest_blockchain = blockchain
+        return longest_blockchain
+
+    @property
+    def other_nodes_exist(self) -> bool:
+        if len(self.known_nodes) == 0:
+            return False
+        elif len(self.known_nodes) == 1 and self.known_nodes[0].hostname == self.node.hostname:
+            return False
+        else:
+            return True
+
     def join_network(self):
         print("Joining network")
-        other_nodes_exist = False
-        try:
+        if self.other_nodes_exist:
             self.advertise_to_all_known_nodes()
-            other_nodes_exist = True
-        except requests.exceptions.ConnectionError:
-            print("Connection error when trying to join network. This could be caused by a network "
-                  "issue or because we are the first node out here.")
-
-        if other_nodes_exist:
             known_nodes_of_known_node = self.ask_known_nodes_for_their_known_nodes()
             self.store_nodes(known_nodes_of_known_node)
             self.advertise_to_all_known_nodes()
+            self.initialize_blockchain()
+        else:
+            print("No other node exists. This could be caused by a network issue or because we are the first node out here.")
+            initialize_default_blockchain()
 
     def validate_node_is_known(self, inquiring_node: Node) -> bool:
         if inquiring_node in self.known_nodes:

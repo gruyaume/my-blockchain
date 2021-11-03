@@ -4,12 +4,8 @@ import requests
 
 from common.block import Block
 from common.io_mem_pool import get_transactions_from_memory, store_transactions_in_memory
-from common.node import Node
-from node.transaction_validation.script import StackScript
 from common.network import Network
-
-
-# FILENAME = "src/doc/mem_pool"
+from node.transaction_validation.script import StackScript
 
 
 class TransactionException(Exception):
@@ -33,6 +29,13 @@ class Transaction:
         self.inputs = transaction["inputs"]
         self.outputs = transaction["outputs"]
 
+    @property
+    def is_new(self):
+        current_transactions = get_transactions_from_memory()
+        if self.transaction_data in current_transactions:
+            return False
+        return True
+
     def execute_script(self, unlocking_script, locking_script):
         unlocking_script_list = unlocking_script.split(" ")
         locking_script_list = locking_script.split(" ")
@@ -54,7 +57,6 @@ class Transaction:
                 stack_script.push(element)
 
     def validate(self):
-
         for tx_input in self.inputs:
             transaction_hash = tx_input["transaction_hash"]
             output_index = tx_input["output_index"]

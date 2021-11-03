@@ -1,9 +1,23 @@
+from datetime import datetime
+from unittest.mock import patch
+
 import pytest
 
+from blockchain_users.albert import private_key as albert_private_key
+from blockchain_users.bertrand import private_key as bertrand_private_key
+from blockchain_users.camille import private_key as camille_private_key
 from blockchain_users.miner import public_key_hash
-from common.initialize_blockchain import initialize_blockchain
+from common.block import Block, BlockHeader
 from common.io_mem_pool import store_transactions_in_memory
-from node.new_block_creation.new_block_creation import ProofOfWork, NUMBER_OF_LEADING_ZEROS, BLOCK_REWARD
+from common.merkle_tree import get_merkle_root
+from common.network import Network
+from common.node import Node
+from common.transaction import Transaction
+from common.transaction_input import TransactionInput
+from common.transaction_output import TransactionOutput
+from node.new_block_creation.new_block_creation import ProofOfWork, NUMBER_OF_LEADING_ZEROS, \
+    BLOCK_REWARD
+from wallet.wallet import Owner
 
 
 @pytest.fixture(scope="module")
@@ -43,16 +57,107 @@ def starting_zeros():
     return "".join([str(0) for _ in range(NUMBER_OF_LEADING_ZEROS)])
 
 
+@pytest.fixture(scope="module")
+def network():
+    node = Node("1.1.1.1:1234")
+    return Network(node)
+
+
+@pytest.fixture(scope="module")
+def albert_wallet():
+    return Owner(private_key=albert_private_key)
+
+
+@pytest.fixture(scope="module")
+def bertrand_wallet():
+    return Owner(private_key=bertrand_private_key)
+
+
+@pytest.fixture(scope="module")
+def camille_wallet():
+    return Owner(private_key=camille_private_key)
+
+
+@pytest.fixture(scope="module")
+def blockchain(albert_wallet, bertrand_wallet, camille_wallet):
+    timestamp_0 = datetime.timestamp(datetime.fromisoformat('2011-11-04 00:05:23.111'))
+    input_0 = TransactionInput(transaction_hash="abcd1234",
+                               output_index=0)
+    output_0 = TransactionOutput(public_key_hash=b"Albert",
+                                 amount=40)
+    transaction_0 = Transaction([input_0], [output_0])
+    block_header_0 = BlockHeader(previous_block_hash="1111",
+                                 timestamp=timestamp_0,
+                                 noonce=2,
+                                 merkle_root=get_merkle_root([transaction_0.transaction_data]))
+    block_0 = Block(
+        transactions=[transaction_0.transaction_data],
+        block_header=block_header_0
+    )
+
+    timestamp_1 = datetime.timestamp(datetime.fromisoformat('2011-11-04 00:05:23.111'))
+    input_0 = TransactionInput(transaction_hash=block_0.transactions[0]["transaction_hash"], output_index=0)
+    output_0 = TransactionOutput(public_key_hash=bertrand_wallet.public_key_hash, amount=30)
+    output_1 = TransactionOutput(public_key_hash=albert_wallet.public_key_hash, amount=10)
+    transaction_1 = Transaction([input_0], [output_0, output_1])
+    block_header_1 = BlockHeader(
+        previous_block_hash=block_0.block_header.hash,
+        timestamp=timestamp_1,
+        noonce=3,
+        merkle_root=get_merkle_root([transaction_1.transaction_data])
+    )
+    block_1 = Block(
+        transactions=[transaction_1.transaction_data],
+        block_header=block_header_1,
+        previous_block=block_0,
+    )
+    timestamp_2 = datetime.timestamp(datetime.fromisoformat('2011-11-07 00:05:13.222'))
+    input_0 = TransactionInput(transaction_hash=block_1.transactions[0]["transaction_hash"], output_index=1)
+    output_0 = TransactionOutput(public_key_hash=camille_wallet.public_key_hash, amount=10)
+    transaction_2 = Transaction([input_0], [output_0])
+    block_header_2 = BlockHeader(
+        previous_block_hash=block_1.block_header.hash,
+        timestamp=timestamp_2,
+        noonce=4,
+        merkle_root=get_merkle_root([transaction_2.transaction_data])
+    )
+    block_2 = Block(
+        transactions=[transaction_2.transaction_data],
+        block_header=block_header_2,
+        previous_block=block_1,
+    )
+
+    timestamp_3 = datetime.timestamp(datetime.fromisoformat('2011-11-09 00:11:13.333'))
+    input_0 = TransactionInput(transaction_hash=block_1.transactions[0]["transaction_hash"], output_index=0)
+    output_0 = TransactionOutput(public_key_hash=camille_wallet.public_key_hash, amount=5)
+    output_1 = TransactionOutput(public_key_hash=bertrand_wallet.public_key_hash, amount=25)
+    transaction_3 = Transaction([input_0], [output_0, output_1])
+    block_header_3 = BlockHeader(
+        previous_block_hash=block_2.block_header.hash,
+        timestamp=timestamp_3,
+        noonce=5,
+        merkle_root=get_merkle_root([transaction_3.transaction_data])
+    )
+    block_3 = Block(
+        transactions=[transaction_3.transaction_data],
+        block_header=block_header_3,
+        previous_block=block_2,
+    )
+    return block_3
+
+
+@patch("common.io_blockchain.get_blockchain_from_memory")
 def test_given_transactions_in_mem_pool_when_new_block_is_created_then_header_hash_starts_with_four_zeros(
-        store_transactions_in_mem_pool, starting_zeros):
-    initialize_blockchain()
-    pow = ProofOfWork()
+        mock_get_blockchain_from_memory_, store_transactions_in_mem_pool, starting_zeros, network, blockchain):
+    mock_get_blockchain_from_memory_.return_value = ""
+    pow = ProofOfWork(network)
     pow.create_new_block()
     assert pow.new_block.block_header.hash.startswith(starting_zeros)
 
 
-def test_given_transactions_in_mem_pool_when_create_new_block_then_coinbase_transaction_is_added(store_transactions_in_mem_pool, transactions, transaction_fee):
-    pow = ProofOfWork()
+def test_given_transactions_in_mem_pool_when_create_new_block_then_coinbase_transaction_is_added(
+        store_transactions_in_mem_pool, transactions, transaction_fee, network):
+    pow = ProofOfWork(network)
     pow.create_new_block()
     new_block_transactions = pow.new_block.transactions
 
@@ -66,25 +171,27 @@ def test_given_transactions_in_mem_pool_when_create_new_block_then_coinbase_tran
     }
 
 
-def test_given_no_transaction_when_get_transaction_fees_then_0_is_returned():
+def test_given_no_transaction_when_get_transaction_fees_then_0_is_returned(network):
     transactions = []
-    pow = ProofOfWork()
+    pow = ProofOfWork(network)
 
     transaction_fees = pow.get_transaction_fees(transactions)
 
     assert transaction_fees == 0
 
 
-def test_given_transactions_when_get_transaction_fees_then_transaction_fees_are_returned(transactions):
-    pow = ProofOfWork()
+def test_given_transactions_when_get_transaction_fees_then_transaction_fees_are_returned(
+        transactions, network):
+    pow = ProofOfWork(network)
 
     transaction_fees = pow.get_transaction_fees(transactions)
 
     assert transaction_fees == 0.5
 
 
-def test_given_transaction_fees_when_get_coinbase_transaction_then_coinbase_transaction_is_returned(transaction_fee):
-    pow = ProofOfWork()
+def test_given_transaction_fees_when_get_coinbase_transaction_then_coinbase_transaction_is_returned(
+        transaction_fee, network):
+    pow = ProofOfWork(network)
 
     coinbase_transaction = pow.get_coinbase_transaction(transaction_fee)
 
