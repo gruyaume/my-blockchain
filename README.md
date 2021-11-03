@@ -12,6 +12,7 @@ The goal of this project is to provide code to support a tutorial on blockchains
 6. [The network](https://gruyaume.medium.com/create-your-own-blockchain-using-python-pt-6-d00e06c1c9db)
 7. [New Block Creation and Proof-of-Work](https://gruyaume.medium.com/create-your-own-blockchain-using-python-pt-7-6cdcb44697fe)
 8. [Incentives and Transaction fees](https://gruyaume.medium.com/create-your-own-blockchain-using-python-pt-8-bf33e01f7cbb)
+9. [A Distributed Network](https://gruyaume.medium.com/create-your-own-blockchain-using-python-pt-9-240698fe513b)
 
 ## Requirements
 
@@ -22,7 +23,7 @@ Python 3.8
 Install libraries with pip:
 `pip3 install -r requirements.txt`
 
-## Deployment
+## Deployment (Beta)
 
 A docker image is provided on docker hub [here](https://hub.docker.com/repository/docker/gruyaume/my-blockchain). 
 You can deploy multiple instances of a blockchain node like so:

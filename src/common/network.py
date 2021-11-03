@@ -1,7 +1,5 @@
 import json
 
-import requests
-
 from common.node import Node
 from common.io_blockchain import store_blockchain_dict_in_memory
 from common.initialize_default_blockchain import initialize_default_blockchain
@@ -27,7 +25,6 @@ class Network:
         for node in self.known_nodes:
             if node.hostname != self.node.hostname:
                 node.advertise(self.node.hostname)
-        print("ok")
 
     def ask_known_nodes_for_their_known_nodes(self) -> list:
         print("Asking known nodes for their own known nodes")
@@ -95,12 +92,6 @@ class Network:
         else:
             print("No other node exists. This could be caused by a network issue or because we are the first node out here.")
             initialize_default_blockchain()
-
-    def validate_node_is_known(self, inquiring_node: Node) -> bool:
-        if inquiring_node in self.known_nodes:
-            return True
-        else:
-            return False
 
     def return_known_nodes(self) -> []:
         with open(self.KNOWN_NODES_FILE) as f:
