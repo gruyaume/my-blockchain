@@ -19,5 +19,3 @@ spec:
       - name: my-blockchain
         image: gruyaume/my-blockchain:1.0.0
         imagePullPolicy: Always
-        ports:
-          - containerPort: 5000
