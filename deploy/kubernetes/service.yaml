@@ -5,7 +5,9 @@ metadata:
 spec:
   selector:
     app: my-blockchain
+  type: LoadBalancer
   ports:
-    - protocol: TCP
+    - name: http
+      protocol: TCP
       port: 80
       targetPort: 5000
