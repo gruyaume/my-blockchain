@@ -13,6 +13,7 @@ The goal of this project is to provide code to support a tutorial on blockchains
 7. [New Block Creation and Proof-of-Work](https://gruyaume.medium.com/create-your-own-blockchain-using-python-pt-7-6cdcb44697fe)
 8. [Incentives and Transaction fees](https://gruyaume.medium.com/create-your-own-blockchain-using-python-pt-8-bf33e01f7cbb)
 9. [A Distributed Network](https://gruyaume.medium.com/create-your-own-blockchain-using-python-pt-9-240698fe513b)
+10. [Deployment](https://)
 
 ## Requirements
 
@@ -23,19 +24,28 @@ Python 3.8
 Install libraries with pip:
 `pip3 install -r requirements.txt`
 
-## Deployment (Beta)
+## Deployment
 
 A docker image is provided on docker hub [here](https://hub.docker.com/repository/docker/gruyaume/my-blockchain). 
-You can deploy multiple instances of a blockchain node like so:
+The assumption is that you have access to a Kubernetes cluster. 
+
+### Deploying via kubernetes yaml files
+
+Go to the kubernetes deployment directory:
 
 ```bash
-docker run -d --name my-blockchain-0 -p 5000:5000  gruyaume/my-blockchain:1.0.0
-docker run -d --name my-blockchain-1 -p 5001:5000  gruyaume/my-blockchain:1.0.0
-docker run -d --name my-blockchain-2 -p 5002:5000  gruyaume/my-blockchain:1.0.0
+ubuntu@ip-172-31-24-207:~$ cd my-blockchain/deploy/kubernetes/
 ```
 
-You can specify whichever port you want to be exposed (here we use `5000`, `5001` and `5002`) but Flask
-itself listens on port 5000. This can't be changed.
+Create a namespace:
+```bash
+ubuntu@ip-172-31-24-207:~/my-blockchain/deploy/kubernetes$ kubectl create namespace dev1
+```
+
+Deploy the blockchain application:
+```bash
+ubuntu@ip-172-31-24-207:~/my-blockchain/deploy/kubernetes$ kubectl apply -f my_blockchain_pod.yaml -n dev1
+```
 
 ### Validation
 
@@ -51,25 +61,6 @@ CONTAINER ID   IMAGE                          COMMAND                  CREATED  
 You can use Postman to query `http://127.0.0.1:5000/block` (as well as ports `5001` and `5002`) and
 you should be receiving an answer in all cases.
 
-
-## Unit tests
-Run unit tests locally by running the following:
-```bash
-pip3 install tox
-tox -e unit
-```
-
-## Integration tests
-Integration tests allow to complete transactions from the wallet to the node.
-
-Run integration tests:
-```bash
-export PYTHONPATH=src
-pytest integration_tests
-```
-
-Note that you can change the HTTP port that your flask app listens on by adding the `--port` option to `flask run`.
-Example: `flask run --port 5002`
 
 ## New blockchain user 
 In the current implementation there are 4 users of the blockchain: albert, bertrand, camille and the miner. To create a 
