@@ -4,3 +4,4 @@ RUN pip3 install -r requirements.txt
 ENV PYTHONPATH="src"
 ENV FLASK_APP=src/node/main.py
 CMD ["python3", "-m" , "flask", "run", "--port=80"]
+EXPOSE 80
