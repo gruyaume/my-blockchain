@@ -9,8 +9,8 @@ spec:
   rules:
   - http:
       paths:
-      - path: /
-        pathType: Prefix
+      - path: /my-blockchain
+        pathType: Exact
         backend:
           service:
             name: my-blockchain
