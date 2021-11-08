@@ -1,12 +1,16 @@
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: http-ingress
+  name: my-blockchain-ingress
+  namespace: dev1
 spec:
   rules:
   - http:
       paths:
       - path: /
+        pathType: Prefix
         backend:
-          serviceName: my-blockchain
-          servicePort: 80
+          service:
+            name: my-blockchain
+            port:
+              number: 80
