@@ -5,7 +5,7 @@ metadata:
 spec:
   ports:
   - name: http
-    targetPort: 5000
+    targetPort: 80
     port: 80
   selector:
     app: my-blockchain
