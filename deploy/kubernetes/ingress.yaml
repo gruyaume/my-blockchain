@@ -4,13 +4,12 @@ metadata:
   name: my-blockchain
   annotations:
     kubernetes.io/ingress.class: public
-    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
   - http:
       paths:
-      - path: /my-blockchain
-        pathType: Exact
+      - path: /
+        pathType: Prefix
         backend:
           service:
             name: my-blockchain

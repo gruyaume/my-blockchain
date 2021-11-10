@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask, request, jsonify
 
 from common.io_blockchain import get_blockchain_from_memory
@@ -8,7 +10,8 @@ from node.transaction_validation.transaction_validation import Transaction, Tran
 
 app = Flask(__name__)
 
-MY_HOSTNAME = "127.0.0.1:5000"
+
+MY_HOSTNAME = os.environ['MY_HOSTNAME']
 my_node = Node(MY_HOSTNAME)
 network = Network(my_node)
 network.join_network()

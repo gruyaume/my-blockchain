@@ -16,3 +16,6 @@ spec:
       - name: my-blockchain
         image: gruyaume/my-blockchain:1.0.0
         imagePullPolicy: Always
+        env:
+        - name: MY_HOSTNAME
+          value: "my-blockchain.gruyaume.com"
