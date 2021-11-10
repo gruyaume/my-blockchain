@@ -1,10 +1,10 @@
 import json
 
-from common.node import Node
-from common.io_blockchain import store_blockchain_dict_in_memory
-from common.initialize_default_blockchain import initialize_default_blockchain
-import time
 import requests
+
+from common.initialize_default_blockchain import initialize_default_blockchain
+from common.io_blockchain import store_blockchain_dict_in_memory
+from common.node import Node
 
 
 class Network:
@@ -15,13 +15,15 @@ class Network:
     def __init__(self, node: Node):
         self.node = node
         self.initialize_known_nodes_file()
-        # time.sleep(60)
 
     def initialize_known_nodes_file(self):
         print("Initializing known nodes file")
         initial_known_node = Node(hostname=self.FIRST_KNOWN_NODE_HOSTNAME)
         with open(self.KNOWN_NODES_FILE, "w") as jsonFile:
-            json.dump([self.node.dict, initial_known_node.dict], jsonFile)
+            if self.node.dict != initial_known_node.dict:
+                json.dump([self.node.dict, initial_known_node.dict], jsonFile)
+            else:
+                json.dump([self.node.dict], jsonFile)
 
     def advertise_to_all_known_nodes(self):
         print("Advertising to all known nodes")
