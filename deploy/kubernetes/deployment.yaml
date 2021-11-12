@@ -20,7 +20,7 @@ spec:
         - name: MY_HOSTNAME
           value: "example-blockchain.com"
         volumeMounts:
-          - name: vol
+          - name: mempool
             mountPath: /mempool
       - name: my-miner
         image: gruyaume/my-miner:1.0.0
@@ -29,7 +29,7 @@ spec:
         - name: MY_HOSTNAME
           value: "example-blockchain.com"
         volumeMounts:
-        - name: vol
+        - name: mempool
           mountPath: /mempool
       volumes:
       - name: mempool
