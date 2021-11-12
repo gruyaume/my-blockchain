@@ -1,11 +1,13 @@
 # Contributing
 
-## Building the docker image
+## Building the docker images
 
 ```bash
 docker login
-docker build -t gruyaume/my-blockchain:1.0.0 .
+docker build -t gruyaume/my-blockchain:1.0.0 -f node.Dockerfile .
+docker build -t gruyaume/my-miner:1.0.0 -f miner.Dockerfile .
 docker push gruyaume/my-blockchain:1.0.0
+docker push gruyaume/my-miner:1.0.0
 ```
 
 
@@ -24,6 +26,3 @@ Run integration tests:
 export PYTHONPATH=src
 pytest integration_tests
 ```
-
-Note that you can change the HTTP port that your flask app listens on by adding the `--port` option to `flask run`.
-Example: `flask run --port 5002`

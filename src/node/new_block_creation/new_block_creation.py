@@ -93,6 +93,7 @@ class ProofOfWork:
                     "block": {
                         "header": self.new_block.block_header.to_dict,
                         "transactions": self.new_block.transactions
-                    }
+                    },
+                    "sender": self.network.node.hostname
                 }
                 node.send_new_block(block_content)

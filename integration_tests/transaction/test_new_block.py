@@ -10,7 +10,8 @@ from common.network import Network
 from common.node import Node
 from common.transaction_input import TransactionInput
 from common.transaction_output import TransactionOutput
-from integration_tests.common.default_values import SERVER_HOSTNAME
+from integration_tests.common.blockchain_network import DefaultBlockchainNetwork, NODE00_HOSTNAME, \
+    NODE01_HOSTNAME, NODE02_HOSTNAME
 from node.new_block_creation.new_block_creation import ProofOfWork
 from wallet.wallet import Owner, Wallet, Transaction
 
@@ -21,8 +22,24 @@ def camille():
 
 
 @pytest.fixture(scope="module")
-def default_node():
-    return Node(SERVER_HOSTNAME)
+def node00():
+    return Node(NODE00_HOSTNAME)
+
+
+@pytest.fixture(scope="module")
+def node01():
+    return Node(NODE01_HOSTNAME)
+
+
+@pytest.fixture(scope="module")
+def node02():
+    return Node(NODE02_HOSTNAME)
+
+
+
+@pytest.fixture(scope="module")
+def blockchain_network():
+    return DefaultBlockchainNetwork()
 
 
 @pytest.fixture(scope="module")
@@ -62,42 +79,105 @@ def network() -> Network:
 
 
 def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_block_is_accepted(
-        create_good_transactions, default_node, network):
-    default_node.restart()
+        create_good_transactions, blockchain_network, network):
+    blockchain_network.restart()
     time.sleep(3)
     pow = ProofOfWork(network)
     pow.create_new_block()
     pow.broadcast()
 
 
-def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_block_is_added_to_current_blockchain(
-        create_good_transactions, default_node, network):
-    default_node.restart()
+def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_a_new_block_is_added_to_current_blockchain(
+        create_good_transactions, blockchain_network, node00, network):
+    blockchain_network.restart()
     time.sleep(3)
-    initial_blockchain = default_node.get_blockchain()
+    node00_initial_blockchain = node00.get_blockchain()
     pow = ProofOfWork(network)
     pow.create_new_block()
     pow.broadcast()
-    new_blockchain = default_node.get_blockchain()
-    new_block_header = new_blockchain[0]["header"]
-    new_block_header_obj = BlockHeader(
-        merkle_root=new_block_header["merkle_root"],
-        noonce=new_block_header["noonce"],
-        previous_block_hash=new_block_header["previous_block_hash"],
-        timestamp=new_block_header["timestamp"]
+    node00_new_blockchain = node00.get_blockchain()
+    assert len(node00_new_blockchain) == len(node00_initial_blockchain) + 1
+
+
+def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_block_contains_correct_data(
+        create_good_transactions, blockchain_network, node00, network):
+    blockchain_network.restart()
+    time.sleep(3)
+    pow = ProofOfWork(network)
+    pow.create_new_block()
+    pow.broadcast()
+    node00_new_blockchain = node00.get_blockchain()
+    node00_new_block_header = node00_new_blockchain[0]["header"]
+    node00_new_block_header_obj = BlockHeader(
+        merkle_root=node00_new_block_header["merkle_root"],
+        noonce=node00_new_block_header["noonce"],
+        previous_block_hash=node00_new_block_header["previous_block_hash"],
+        timestamp=node00_new_block_header["timestamp"]
     )
-    assert len(new_blockchain) == len(initial_blockchain) + 1
-    assert new_block_header_obj.hash == pow.new_block.block_header.hash
+    assert node00_new_block_header_obj.hash == pow.new_block.block_header.hash
+
+
+def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_all_nodes_add_new_block(
+        create_good_transactions, blockchain_network, node00, node01, node02, network):
+    blockchain_network.restart()
+    time.sleep(3)
+    node00_initial_blockchain = node00.get_blockchain()
+    node01_initial_blockchain = node01.get_blockchain()
+    node02_initial_blockchain = node02.get_blockchain()
+    pow = ProofOfWork(network)
+    pow.create_new_block()
+    pow.broadcast()
+    node00_new_blockchain = node00.get_blockchain()
+    node01_new_blockchain = node01.get_blockchain()
+    node02_new_blockchain = node02.get_blockchain()
+    assert len(node00_initial_blockchain) == len(node01_initial_blockchain) == len(node02_initial_blockchain)
+    assert len(node00_new_blockchain) == len(node01_new_blockchain) == len(node02_new_blockchain)
+    assert len(node00_new_blockchain) == len(node00_initial_blockchain) + 1
+
+
+def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_all_nodes_contain_correct_data(
+        create_good_transactions, blockchain_network, node00, node01, node02, network):
+    blockchain_network.restart()
+    time.sleep(3)
+    pow = ProofOfWork(network)
+    pow.create_new_block()
+    pow.broadcast()
+    node00_new_blockchain = node00.get_blockchain()
+    node01_new_blockchain = node01.get_blockchain()
+    node02_new_blockchain = node02.get_blockchain()
+    node00_new_block_header = node00_new_blockchain[0]["header"]
+    node00_new_block_header_obj = BlockHeader(
+        merkle_root=node00_new_block_header["merkle_root"],
+        noonce=node00_new_block_header["noonce"],
+        previous_block_hash=node00_new_block_header["previous_block_hash"],
+        timestamp=node00_new_block_header["timestamp"]
+    )
+    node01_new_block_header = node01_new_blockchain[0]["header"]
+    node01_new_block_header_obj = BlockHeader(
+        merkle_root=node01_new_block_header["merkle_root"],
+        noonce=node01_new_block_header["noonce"],
+        previous_block_hash=node01_new_block_header["previous_block_hash"],
+        timestamp=node01_new_block_header["timestamp"]
+    )
+    node02_new_block_header = node02_new_blockchain[0]["header"]
+    node02_new_block_header_obj = BlockHeader(
+        merkle_root=node02_new_block_header["merkle_root"],
+        noonce=node02_new_block_header["noonce"],
+        previous_block_hash=node02_new_block_header["previous_block_hash"],
+        timestamp=node02_new_block_header["timestamp"]
+    )
+    assert node00_new_block_header_obj == node01_new_block_header_obj == node02_new_block_header_obj
+    assert node00_new_block_header_obj.hash == pow.new_block.block_header.hash
 
 
 def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_block_contains_new_transactions_and_coinbase(
-        create_good_transactions, default_node, network):
-    default_node.restart()
+        create_good_transactions, blockchain_network, node00, network):
+    blockchain_network.restart()
     time.sleep(3)
     pow = ProofOfWork(network)
     pow.create_new_block()
     pow.broadcast()
-    new_blockchain = default_node.get_blockchain()
+    new_blockchain = node00.get_blockchain()
     assert len(new_blockchain[0]["transactions"]) == 2
     assert new_blockchain[0]["transactions"][0]["outputs"] == [
         {
@@ -114,10 +194,13 @@ def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_
 
 
 def test_given_bad_transactions_in_mem_pool_when_new_block_is_created_then_new_block_is_refused(
-        create_bad_transactions, default_node, network):
-    default_node.restart()
+        create_bad_transactions, blockchain_network, node00, network):
+    blockchain_network.restart()
+    initial_blockchain = node00.get_blockchain()
     pow = ProofOfWork(network)
     pow.create_new_block()
     with pytest.raises(requests.exceptions.HTTPError) as error:
         pow.broadcast()
+    new_blockchain = node00.get_blockchain()
     assert 'Could not find locking script for utxo' in error.value.response.text
+    assert initial_blockchain == new_blockchain

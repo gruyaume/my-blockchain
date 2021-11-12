@@ -26,7 +26,7 @@ def validate_block():
     blockchain_base = get_blockchain_from_memory()
     try:
         block = NewBlock(blockchain_base, network)
-        block.receive(new_block=content["block"])
+        block.receive(new_block=content["block"], sender=content["sender"])
         block.validate()
         block.add()
         block.broadcast()

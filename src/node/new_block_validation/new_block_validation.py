@@ -1,9 +1,12 @@
+import requests
+
 from common.block import Block, BlockHeader
+from common.block_reward import BLOCK_REWARD
 from common.io_blockchain import store_blockchain_in_memory
+from common.network import Network
 from common.values import NUMBER_OF_LEADING_ZEROS
 from node.transaction_validation.transaction_validation import Transaction
-from common.block_reward import BLOCK_REWARD
-from common.network import Network
+import logging
 
 
 class NewBlockException(Exception):
@@ -17,10 +20,12 @@ class NewBlock:
         self.blockchain = blockchain
         self.network = network
         self.new_block = None
+        self.sender = ""
 
-    def receive(self, new_block: dict):
+    def receive(self, new_block: dict, sender: str):
         block_header = BlockHeader(**new_block["header"])
         self.new_block = Block(transactions=new_block["transactions"], block_header=block_header)
+        self.sender = sender
         try:
             assert self.blockchain.block_header.hash == self.new_block.block_header.previous_block_hash
         except AssertionError:
@@ -60,13 +65,19 @@ class NewBlock:
         store_blockchain_in_memory(self.new_block)
 
     def broadcast(self):
+        logging.info(f"Broadcasting block")
         node_list = self.network.known_nodes
         for node in node_list:
-            if node.hostname != self.network.node.hostname:
+            if node.hostname != self.network.node.hostname and node.hostname != self.sender:
                 block_content = {
                     "block": {
                         "header": self.new_block.block_header.to_dict,
                         "transactions": self.new_block.transactions
-                    }
+                    },
+                    "sender": self.network.node.hostname
                 }
-                node.send_new_block(block_content)
+                try:
+                    logging.info(f"Broadcasting to {node.hostname}")
+                    node.send_new_block(block_content)
+                except requests.exceptions.HTTPError as error:
+                    logging.info(f"Failed to broadcast block to {node.hostname}: {error}")

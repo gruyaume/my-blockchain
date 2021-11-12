@@ -19,3 +19,19 @@ spec:
         env:
         - name: MY_HOSTNAME
           value: "example-blockchain.com"
+        volumeMounts:
+          - name: vol
+            mountPath: /mempool
+      - name: my-miner
+        image: gruyaume/my-miner:1.0.0
+        imagePullPolicy: Always
+        env:
+        - name: MY_HOSTNAME
+          value: "example-blockchain.com"
+        volumeMounts:
+        - name: vol
+          mountPath: /mempool
+      volumes:
+      - name: mempool
+        hostPath:
+          path: /mempool
