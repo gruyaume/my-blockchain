@@ -1,4 +1,5 @@
 import json
+import logging
 
 import requests
 
@@ -10,14 +11,14 @@ from common.node import Node
 class Network:
 
     KNOWN_NODES_FILE = 'src/doc/known_nodes.json'
-    FIRST_KNOWN_NODE_HOSTNAME = "my-blockchain.gruyaume.com"
+    FIRST_KNOWN_NODE_HOSTNAME = "node00.my-blockchain.gruyaume.com"
 
     def __init__(self, node: Node):
         self.node = node
         self.initialize_known_nodes_file()
 
     def initialize_known_nodes_file(self):
-        print("Initializing known nodes file")
+        logging.info("Initializing known nodes file")
         initial_known_node = Node(hostname=self.FIRST_KNOWN_NODE_HOSTNAME)
         with open(self.KNOWN_NODES_FILE, "w") as jsonFile:
             if self.node.dict != initial_known_node.dict:
@@ -26,26 +27,37 @@ class Network:
                 json.dump([self.node.dict], jsonFile)
 
     def advertise_to_all_known_nodes(self):
-        print("Advertising to all known nodes")
+        logging.info("Advertising to all known nodes")
         for node in self.known_nodes:
             if node.hostname != self.node.hostname:
                 try:
                     node.advertise(self.node.hostname)
                 except requests.exceptions.ConnectionError:
-                    print(f"Node not answering: {node.hostname}")
+                    logging.info(f"Node not answering: {node.hostname}")
+
+    def advertise_to_default_node(self) -> bool:
+        logging.info(f"Advertising to default node: {self.FIRST_KNOWN_NODE_HOSTNAME}")
+        default_node = Node(hostname=self.FIRST_KNOWN_NODE_HOSTNAME)
+        try:
+            default_node.advertise(self.node.hostname)
+            logging.info("Default node answered to advertising!")
+            return True
+        except requests.exceptions.ConnectionError:
+            logging.info(f"Default node not answering: {self.FIRST_KNOWN_NODE_HOSTNAME}")
+            return False
 
     def ask_known_nodes_for_their_known_nodes(self) -> list:
-        print("Asking known nodes for their own known nodes")
+        logging.info("Asking known nodes for their own known nodes")
         known_nodes_of_known_nodes = []
         for currently_known_node in self.known_nodes:
             if currently_known_node.hostname != self.node.hostname:
                 try:
-                    known_nodes_of_known_node = currently_known_node.known_node_request(self.node.hostname)
+                    known_nodes_of_known_node = currently_known_node.known_node_request()
                     for node in known_nodes_of_known_node:
                         if node["hostname"] != self.node.hostname:
                             known_nodes_of_known_nodes.append(Node(node["hostname"]))
                 except requests.exceptions.ConnectionError:
-                    print(f"Node not answering: {currently_known_node.hostname}")
+                    logging.info(f"Node not answering: {currently_known_node.hostname}")
         return known_nodes_of_known_nodes
 
     @property
@@ -56,7 +68,7 @@ class Network:
         return known_nodes
 
     def store_new_node(self, new_node: Node):
-        print(f"Storing new node: {new_node.hostname}")
+        logging.info(f"Storing new node: {new_node.hostname}")
         with open(self.KNOWN_NODES_FILE, "r+") as f:
             current_nodes_json = json.load(f)
             current_nodes = [Node(hostname=node["hostname"]) for node in current_nodes_json]
@@ -74,7 +86,7 @@ class Network:
         store_blockchain_dict_in_memory(longest_blockchain)
 
     def get_longest_blockchain(self):
-        print("Retrieving the longest blockchain")
+        logging.info("Retrieving the longest blockchain")
         longest_blockchain_size = 0
         longest_blockchain = None
         for node in self.known_nodes:
@@ -86,8 +98,8 @@ class Network:
                         longest_blockchain_size = blockchain_length
                         longest_blockchain = blockchain
                 except requests.exceptions.ConnectionError:
-                    print(f"Node not answering: {node.hostname}")
-        print(f"Longest blockchain has a size of {longest_blockchain_size} blocks")
+                    logging.info(f"Node not answering: {node.hostname}")
+        logging.info(f"Longest blockchain has a size of {longest_blockchain_size} blocks")
         return longest_blockchain
 
     @property
@@ -100,15 +112,19 @@ class Network:
             return True
 
     def join_network(self):
-        print("Joining network")
+        logging.info("Joining network")
         if self.other_nodes_exist:
-            self.advertise_to_all_known_nodes()
-            known_nodes_of_known_node = self.ask_known_nodes_for_their_known_nodes()
-            self.store_nodes(known_nodes_of_known_node)
-            self.advertise_to_all_known_nodes()
-            self.initialize_blockchain()
+            default_node_answered = self.advertise_to_default_node()
+            if default_node_answered:
+                known_nodes_of_known_node = self.ask_known_nodes_for_their_known_nodes()
+                self.store_nodes(known_nodes_of_known_node)
+                self.advertise_to_all_known_nodes()
+                self.initialize_blockchain()
+            else:
+                logging.info("Default node didn't answer. This could be caused by a network issue.")
+                initialize_default_blockchain()
         else:
-            print("No other node exists. This could be caused by a network issue or because we are the first node out here.")
+            logging.info("No other node exists. We might be the first node out here.")
             initialize_default_blockchain()
 
     def return_known_nodes(self) -> []:

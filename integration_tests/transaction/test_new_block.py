@@ -1,16 +1,18 @@
+import time
+
 import pytest
 import requests
 
 from blockchain_users.camille import private_key as camille_private_key
-from common.io_blockchain import get_blockchain_from_memory
+from common.block import BlockHeader
 from common.io_mem_pool import store_transactions_in_memory
-from common.transaction_input import TransactionInput
-from common.transaction_output import TransactionOutput
-from integration_tests.common.flask import Server
-from node.new_block_creation.new_block_creation import ProofOfWork
-from wallet.wallet import Owner, Wallet, Transaction
 from common.network import Network
 from common.node import Node
+from common.transaction_input import TransactionInput
+from common.transaction_output import TransactionOutput
+from integration_tests.common.default_values import SERVER_HOSTNAME
+from node.new_block_creation.new_block_creation import ProofOfWork
+from wallet.wallet import Owner, Wallet, Transaction
 
 
 @pytest.fixture(scope="module")
@@ -19,8 +21,13 @@ def camille():
 
 
 @pytest.fixture(scope="module")
-def camille_wallet(camille):
-    return Wallet(camille)
+def default_node():
+    return Node(SERVER_HOSTNAME)
+
+
+@pytest.fixture(scope="module")
+def camille_wallet(camille, default_node):
+    return Wallet(camille, default_node)
 
 
 @pytest.fixture(scope="module")
@@ -48,12 +55,6 @@ def create_bad_transactions(camille):
 
 
 @pytest.fixture(scope="module")
-def server() -> Server:
-    server = Server()
-    return server
-
-
-@pytest.fixture(scope="module")
 def network() -> Network:
     node = Node(hostname="1.1.1.1:1234")
     network = Network(node)
@@ -61,43 +62,50 @@ def network() -> Network:
 
 
 def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_block_is_accepted(
-        create_good_transactions, server, network):
-    server.start()
+        create_good_transactions, default_node, network):
+    default_node.restart()
+    time.sleep(3)
     pow = ProofOfWork(network)
     pow.create_new_block()
     pow.broadcast()
-    server.stop()
 
 
 def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_block_is_added_to_current_blockchain(
-        create_good_transactions, server, network):
-    server.start()
-    initial_blockchain = get_blockchain_from_memory()
+        create_good_transactions, default_node, network):
+    default_node.restart()
+    time.sleep(3)
+    initial_blockchain = default_node.get_blockchain()
     pow = ProofOfWork(network)
     pow.create_new_block()
     pow.broadcast()
-    new_block = get_blockchain_from_memory()
-    server.stop()
-    assert len(new_block) == len(initial_blockchain) + 1
-    assert new_block.block_header.hash == pow.new_block.block_header.hash
+    new_blockchain = default_node.get_blockchain()
+    new_block_header = new_blockchain[0]["header"]
+    new_block_header_obj = BlockHeader(
+        merkle_root=new_block_header["merkle_root"],
+        noonce=new_block_header["noonce"],
+        previous_block_hash=new_block_header["previous_block_hash"],
+        timestamp=new_block_header["timestamp"]
+    )
+    assert len(new_blockchain) == len(initial_blockchain) + 1
+    assert new_block_header_obj.hash == pow.new_block.block_header.hash
 
 
 def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_block_contains_new_transactions_and_coinbase(
-        create_good_transactions, server, network):
-    server.start()
+        create_good_transactions, default_node, network):
+    default_node.restart()
+    time.sleep(3)
     pow = ProofOfWork(network)
     pow.create_new_block()
     pow.broadcast()
-    new_block = get_blockchain_from_memory()
-    server.stop()
-    assert len(new_block.transactions) == 2
-    assert new_block.transactions[0]["outputs"] == [
+    new_blockchain = default_node.get_blockchain()
+    assert len(new_blockchain[0]["transactions"]) == 2
+    assert new_blockchain[0]["transactions"][0]["outputs"] == [
         {
             'amount': 5,
             'locking_script': "OP_DUP OP_HASH160 b'a037a093f0304f159fe1e49cfcfff769eaac7cda' OP_EQUAL_VERIFY OP_CHECKSIG"
         }
     ]
-    assert new_block.transactions[1]["outputs"] == [
+    assert new_blockchain[0]["transactions"][1]["outputs"] == [
         {
             'amount': 6.25,
             'locking_script': 'OP_DUP OP_HASH160 4d9715dc8f9578ca2af159409be9c559c5eaceba OP_EQUAL_VERIFY OP_CHECKSIG'
@@ -106,11 +114,10 @@ def test_given_good_transactions_in_mem_pool_when_new_block_is_created_then_new_
 
 
 def test_given_bad_transactions_in_mem_pool_when_new_block_is_created_then_new_block_is_refused(
-        create_bad_transactions, server, network):
-    server.start()
+        create_bad_transactions, default_node, network):
+    default_node.restart()
     pow = ProofOfWork(network)
     pow.create_new_block()
     with pytest.raises(requests.exceptions.HTTPError) as error:
         pow.broadcast()
     assert 'Could not find locking script for utxo' in error.value.response.text
-    server.stop()

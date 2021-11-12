@@ -18,4 +18,4 @@ spec:
         imagePullPolicy: Always
         env:
         - name: MY_HOSTNAME
-          value: "my-blockchain.gruyaume.com"
+          value: "example-blockchain.com"

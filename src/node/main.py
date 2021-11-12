@@ -1,3 +1,4 @@
+import logging
 import os
 
 from flask import Flask, request, jsonify
@@ -7,6 +8,8 @@ from common.network import Network
 from common.node import Node
 from node.new_block_validation.new_block_validation import NewBlock, NewBlockException
 from node.transaction_validation.transaction_validation import Transaction, TransactionException
+
+logging.basicConfig(level=logging.DEBUG, format=f'%(asctime)s: %(message)s')
 
 app = Flask(__name__)
 
@@ -82,6 +85,14 @@ def new_node_advertisement():
 @app.route("/known_node_request", methods=['GET'])
 def known_node_request():
     return jsonify(network.return_known_nodes())
+
+
+@app.route("/restart", methods=['POST'])
+def restart():
+    my_node = Node(MY_HOSTNAME)
+    network = Network(my_node)
+    network.join_network()
+    return "Restart success", 200
 
 
 def main():

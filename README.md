@@ -24,43 +24,96 @@ Python 3.8
 Install libraries with pip:
 `pip3 install -r requirements.txt`
 
-## Deployment
+### Hardware
 
-A docker image is provided on docker hub [here](https://hub.docker.com/repository/docker/gruyaume/my-blockchain). 
-The assumption is that you have access to a Kubernetes cluster. 
+- Processor: 2 vCPU
+- Memory: 4GB
+- Storage: 50GB
 
-### Deploying via kubernetes yaml files
+## Installation Guide
 
-Go to the kubernetes deployment directory:
+A complete installation guide is available on Medium (pt. 10). You should be following this guide 
+if you want your block to be part of the network and be accessible from the outside world.
+Here we will simply deploy the node on a virtual machine without any other infrastructure 
+consideration. We will also assume you have access to a virtual machine running Ubuntu 20.04. 
+We will install Kubernetes on this VM and deploy our application on it.
+
+### Setting up Microk8s
+We will be using [Microk8s](https://microk8s.io/docs), which is a 
+free, fast and easy to deploy Kubernetes release. Once you're inside the virtual machine, install 
+microk8s using snap:
 
 ```bash
-ubuntu@ip-172-31-24-207:~$ cd my-blockchain/deploy/kubernetes/
+ubuntu@ip-10-0-0-54:~$ sudo apt-get update && sudo apt-get upgrade
+ubuntu@ip-10-0-0-54:~$ sudo snap install microk8s --classic
 ```
 
-Create a namespace:
+Update your user's permission to be added to the microk8s group:
 ```bash
-ubuntu@ip-172-31-24-207:~/my-blockchain/deploy/kubernetes$ kubectl create namespace dev1
+ubuntu@ip-10-0-0-54:~$ sudo usermod -a -G microk8s ubuntu
+ubuntu@ip-10-0-0-54:~$ sudo chown -f -R ubuntu ~/.kube
 ```
 
-Deploy the blockchain application:
+After changing those permissions, you'll have to create a new shell for them to take effect, so you 
+can exit and re-ssh to the machine. Once you're in again, enable some add-ons to your microk8s cluster:
 ```bash
-ubuntu@ip-172-31-24-207:~/my-blockchain/deploy/kubernetes$ kubectl apply -f my_blockchain_pod.yaml -n dev1
+ubuntu@ip-10-0-0-54:~$ microk8s enable dns ingress storage
 ```
 
-### Validation
-
-Use `docker ps` to validate that all 3 nodes are deployed properly.
+We will be using MetalLB as our load balancer for Kubernetes. It can be enabled the same way as the other add-ons:
 ```bash
-(venv) guillaume@thinkpad:~/PycharmProjects/my-blockchain$ docker ps
-CONTAINER ID   IMAGE                          COMMAND                  CREATED              STATUS              PORTS                                       NAMES
-80792eb022c6   gruyaume/my-blockchain:1.0.0   "python3 -m flask ru…"   4 seconds ago        Up 3 seconds        0.0.0.0:5002->5000/tcp, :::5002->5000/tcp   my-blockchain-2
-76cd1174e69b   gruyaume/my-blockchain:1.0.0   "python3 -m flask ru…"   About a minute ago   Up About a minute   0.0.0.0:5001->5000/tcp, :::5001->5000/tcp   my-blockchain-1
-86bdd89ab634   gruyaume/my-blockchain:1.0.0   "python3 -m flask ru…"   About a minute ago   Up About a minute   0.0.0.0:5000->5000/tcp, :::5000->5000/tcp   my-blockchain-0
+ubuntu@ip-10-0-0-54:~$ microk8s enable metallb
 ```
 
-You can use Postman to query `http://127.0.0.1:5000/block` (as well as ports `5001` and `5002`) and
-you should be receiving an answer in all cases.
+You will be asked for a range of IP's to provide, answer with the range of private addresses you want, here I'll use : `10.0.1.1–10.0.1.254`.
 
+
+### Deploying our node using kubectl
+MicroK8s uses a namespaced kubectl command to prevent conflicts with any existing installs of kubectl. In our case, we don't have an existing install so we will add an alias like this:
+
+```bash
+ubuntu@ip-10-0-0-54:~$ alias kubectl='microk8s kubectl'
+```
+
+Note that this alias won't survive exiting your shell session so you'll have to re-run the command every time you log back in. Now clone the code from the github and head to the deploy directory:
+```bash
+ubuntu@ip-10-0-0-54:~$ git clone https://github.com/gruyaume/my-blockchain.git
+ubuntu@ip-10-0-0-54:~$ cd my-blockchain/deploy/
+```
+
+Deploy the blockchain using kubectl apply:
+```bash
+ubuntu@ip-10-0-0-54:~/my-blockchain/deploy$ kubectl apply -f kubernetes/
+```
+
+Voilà, you now have a node running.
+
+### Validating the Kubernetes deployment
+You can validate that our service is correctly created:
+```bash
+ubuntu@ip-10-0-0-54:~$ kubectl get svc
+NAME            TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+kubernetes      ClusterIP      10.152.183.1     <none>        443/TCP        22m
+my-blockchain   LoadBalancer   10.152.183.158   10.0.1.1      80:32301/TCP   20m
+```
+
+And that our deployment is also up:
+
+```bash
+ubuntu@ip-10-0-0-54:~$ kubectl get pods
+NAME                            READY   STATUS    RESTARTS   AGE
+my-blockchain-b9d844446-9hnzg   1/1     Running   0          21m
+```
+
+### Validating Networking
+Still from inside the virtual machine, validate that our service returns something when we call it. 
+Here the IP is the EXTERNAL-IP associated to the my-blockchain service. Make sure you use the correct one:
+
+```bash
+ubuntu@ip-10-0-0-54:~$ curl 10.0.1.1/block
+```
+
+You should get in return the blockchain in a list format.
 
 ## New blockchain user 
 In the current implementation there are 4 users of the blockchain: albert, bertrand, camille and the miner. To create a 
