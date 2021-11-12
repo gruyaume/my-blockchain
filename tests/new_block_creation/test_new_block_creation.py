@@ -8,7 +8,7 @@ from blockchain_users.bertrand import private_key as bertrand_private_key
 from blockchain_users.camille import private_key as camille_private_key
 from blockchain_users.miner import public_key_hash
 from common.block import Block, BlockHeader
-from common.io_mem_pool import store_transactions_in_memory
+from common.io_mem_pool import MemPool
 from common.merkle_tree import get_merkle_root
 from common.network import Network
 from common.node import Node
@@ -48,8 +48,13 @@ def transactions(transaction_fee):
 
 
 @pytest.fixture(scope="module")
-def store_transactions_in_mem_pool(transactions):
-    store_transactions_in_memory(transactions)
+def mempool():
+    return MemPool("src/doc/mem_pool")
+
+
+@pytest.fixture(scope="module")
+def store_transactions_in_mem_pool(transactions, mempool):
+    mempool.store_transactions_in_memory(transactions)
 
 
 @pytest.fixture(scope="module")

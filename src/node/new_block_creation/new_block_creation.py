@@ -5,7 +5,7 @@ from blockchain_users.miner import private_key as miner_private_key
 from common.block import Block, BlockHeader
 from common.block_reward import BLOCK_REWARD
 from common.io_blockchain import get_blockchain_from_memory
-from common.io_mem_pool import get_transactions_from_memory
+from common.io_mem_pool import MemPool
 from common.merkle_tree import get_merkle_root
 from common.network import Network
 from common.owner import Owner
@@ -25,6 +25,7 @@ class ProofOfWork:
         self.network = network
         self.blockchain = get_blockchain_from_memory()
         self.new_block = None
+        self.mempool = MemPool()
 
     @staticmethod
     def get_noonce(block_header: BlockHeader) -> int:
@@ -43,7 +44,7 @@ class ProofOfWork:
         return noonce
 
     def create_new_block(self):
-        transactions = get_transactions_from_memory()
+        transactions = self.mempool.get_transactions_from_memory()
         if transactions:
             transaction_fees = self.get_transaction_fees(transactions)
             coinbase_transaction = self.get_coinbase_transaction(transaction_fees)

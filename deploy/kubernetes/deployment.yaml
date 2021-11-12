@@ -19,6 +19,8 @@ spec:
         env:
         - name: MY_HOSTNAME
           value: "example-blockchain.com"
+        - name: MEMPOOL_DIR
+          value: "/mempool/mempool"
         volumeMounts:
           - name: mempool
             mountPath: /mempool
@@ -28,6 +30,8 @@ spec:
         env:
         - name: MY_HOSTNAME
           value: "example-blockchain.com"
+        - name: MEMPOOL_DIR
+          value: "/mempool/mempool"
         volumeMounts:
         - name: mempool
           mountPath: /mempool

@@ -1,12 +1,14 @@
+import logging
+
 import requests
 
 from common.block import Block, BlockHeader
 from common.block_reward import BLOCK_REWARD
 from common.io_blockchain import store_blockchain_in_memory
+from common.io_mem_pool import MemPool
 from common.network import Network
 from common.values import NUMBER_OF_LEADING_ZEROS
 from node.transaction_validation.transaction_validation import Transaction
-import logging
 
 
 class NewBlockException(Exception):
@@ -16,11 +18,12 @@ class NewBlockException(Exception):
 
 
 class NewBlock:
-    def __init__(self, blockchain: Block, network: Network):
+    def __init__(self, blockchain: Block, network: Network, mempool: MemPool):
         self.blockchain = blockchain
         self.network = network
         self.new_block = None
         self.sender = ""
+        self.mempool = mempool
 
     def receive(self, new_block: dict, sender: str):
         block_header = BlockHeader(**new_block["header"])
@@ -49,7 +52,7 @@ class NewBlock:
         input_amount = 0
         output_amount = 0
         for transaction in self.new_block.transactions:
-            transaction_validation = Transaction(self.blockchain, self.network)
+            transaction_validation = Transaction(self.blockchain, self.network, self.mempool)
             transaction_validation.receive(transaction=transaction)
             transaction_validation.validate()
             input_amount = input_amount + transaction_validation.get_total_amount_in_inputs()

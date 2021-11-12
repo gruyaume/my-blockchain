@@ -8,13 +8,15 @@ from common.network import Network
 from common.node import Node
 from node.new_block_validation.new_block_validation import NewBlock, NewBlockException
 from node.transaction_validation.transaction_validation import Transaction, TransactionException
-
+from common.io_mem_pool import MemPool
 logging.basicConfig(level=logging.DEBUG, format=f'%(asctime)s: %(message)s')
 
 app = Flask(__name__)
 
 
 MY_HOSTNAME = os.environ['MY_HOSTNAME']
+MEMPOOL_DIR = os.environ["MEMPOOL_DIR"]
+mempool = MemPool(MEMPOOL_DIR)
 my_node = Node(MY_HOSTNAME)
 network = Network(my_node)
 network.join_network()
@@ -25,7 +27,7 @@ def validate_block():
     content = request.json
     blockchain_base = get_blockchain_from_memory()
     try:
-        block = NewBlock(blockchain_base, network)
+        block = NewBlock(blockchain_base, network, mempool)
         block.receive(new_block=content["block"], sender=content["sender"])
         block.validate()
         block.add()
@@ -40,7 +42,7 @@ def validate_transaction():
     content = request.json
     blockchain_base = get_blockchain_from_memory()
     try:
-        transaction = Transaction(blockchain_base, network)
+        transaction = Transaction(blockchain_base, network, mempool)
         transaction.receive(transaction=content["transaction"])
         if transaction.is_new:
             transaction.validate()
@@ -96,7 +98,8 @@ def restart():
 
 
 def main():
-    global network
+    global network, mempool
+    mempool = MemPool(MEMPOOL_DIR)
     my_node = Node(MY_HOSTNAME)
     network = Network(my_node)
     network.join_network()

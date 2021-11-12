@@ -1,13 +1,17 @@
 from pytest import fixture
 
 from common.block import Block, BlockHeader
-from common.io_mem_pool import store_transactions_in_memory
+from common.io_mem_pool import MemPool
 from common.network import Network
 from common.node import Node
 from node.transaction_validation.transaction_validation import Transaction
 
 
 class TestTransaction:
+
+    @fixture(scope="module")
+    def mempool(self):
+        return MemPool("src/doc/mem_pool")
 
     @fixture(scope="module")
     def network(self):
@@ -30,7 +34,7 @@ class TestTransaction:
         return Block(block_header=block_header, transactions=transactions)
 
     def test_given_new_transaction_when_is_new_then_returns_true(
-            self, network, blockchain_base):
+            self, network, blockchain_base, mempool):
 
         new_transaction = {
             "inputs": [
@@ -44,13 +48,13 @@ class TestTransaction:
                 }
             ]
         }
-        transaction = Transaction(blockchain_base, network)
+        transaction = Transaction(blockchain_base, network, mempool)
         transaction.receive(transaction=new_transaction)
 
         assert transaction.is_new
 
     def test_given_already_stored_transaction_when_is_new_then_returns_false(
-            self, network, blockchain_base):
+            self, network, blockchain_base, mempool):
         new_transaction = {
             "inputs": [
                 {
@@ -63,9 +67,9 @@ class TestTransaction:
                 }
             ]
         }
-        store_transactions_in_memory([new_transaction])
+        mempool.store_transactions_in_memory([new_transaction])
 
-        transaction = Transaction(blockchain_base, network)
+        transaction = Transaction(blockchain_base, network, mempool)
         transaction.receive(transaction=new_transaction)
 
         assert not transaction.is_new

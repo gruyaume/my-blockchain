@@ -3,7 +3,7 @@ import copy
 import requests
 
 from common.block import Block
-from common.io_mem_pool import get_transactions_from_memory, store_transactions_in_memory
+from common.io_mem_pool import MemPool
 from common.network import Network
 from node.transaction_validation.script import StackScript
 
@@ -15,7 +15,7 @@ class TransactionException(Exception):
 
 
 class Transaction:
-    def __init__(self, blockchain: Block, network: Network):
+    def __init__(self, blockchain: Block, network: Network, mempool: MemPool):
         self.blockchain = blockchain
         self.network = network
         self.transaction_data = {}
@@ -23,6 +23,7 @@ class Transaction:
         self.outputs = []
         self.is_valid = False
         self.is_funds_sufficient = False
+        self.mempool = mempool
 
     def receive(self, transaction: dict):
         self.transaction_data = transaction
@@ -31,7 +32,7 @@ class Transaction:
 
     @property
     def is_new(self):
-        current_transactions = get_transactions_from_memory()
+        current_transactions = self.mempool.get_transactions_from_memory()
         if self.transaction_data in current_transactions:
             return False
         return True
@@ -108,6 +109,6 @@ class Transaction:
 
     def store(self):
         if self.is_valid and self.is_funds_sufficient:
-            current_transactions = get_transactions_from_memory()
+            current_transactions = self.mempool.get_transactions_from_memory()
             current_transactions.append(self.transaction_data)
-            store_transactions_in_memory(current_transactions)
+            self.mempool.store_transactions_in_memory(current_transactions)
