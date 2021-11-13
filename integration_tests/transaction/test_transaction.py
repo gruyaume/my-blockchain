@@ -50,7 +50,7 @@
 #     output_0 = TransactionOutput(public_key_hash=b"a037a093f0304f159fe1e49cfcfff769eaac7cda", amount=5)
 #     camille_wallet.process_transaction(inputs=[utxo_0], outputs=[output_0])
 #
-#
+# #
 # def test_given_user_has_more_funds_then_necessary_when_process_transaction_then_transaction_is_accepted(
 #         camille_wallet, blockchain_network):
 #     blockchain_network.restart()

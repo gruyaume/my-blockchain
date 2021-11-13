@@ -1,11 +1,12 @@
 import copy
+import logging
 
 import requests
 
 from common.block import Block
 from common.io_mem_pool import MemPool
-from common.network import Network
 from node.transaction_validation.script import StackScript
+from common.io_known_nodes import KnownNodesMemory
 
 
 class TransactionException(Exception):
@@ -15,15 +16,17 @@ class TransactionException(Exception):
 
 
 class Transaction:
-    def __init__(self, blockchain: Block, network: Network, mempool: MemPool):
+    def __init__(self, blockchain: Block, hostname: str):
         self.blockchain = blockchain
-        self.network = network
         self.transaction_data = {}
         self.inputs = []
         self.outputs = []
         self.is_valid = False
         self.is_funds_sufficient = False
-        self.mempool = mempool
+        self.mempool = MemPool()
+        self.known_node_memory = KnownNodesMemory()
+        self.sender = ""
+        self.hostname = hostname
 
     def receive(self, transaction: dict):
         self.transaction_data = transaction
@@ -58,6 +61,7 @@ class Transaction:
                 stack_script.push(element)
 
     def validate(self):
+        logging.info("Validating inputs")
         for tx_input in self.inputs:
             transaction_hash = tx_input["transaction_hash"]
             output_index = tx_input["output_index"]
@@ -69,7 +73,7 @@ class Transaction:
                 self.execute_script(tx_input["unlocking_script"], locking_script)
                 self.is_valid = True
             except Exception:
-                print('Transaction script validation failed')
+                logging.info('Transaction script validation failed')
                 raise TransactionException(f"UTXO ({transaction_hash}:{output_index})", "Transaction script validation failed")
 
     def get_total_amount_in_inputs(self) -> int:
@@ -88,27 +92,33 @@ class Transaction:
         return total_out
 
     def validate_funds(self):
+        logging.info("Validating funds")
         inputs_total = self.get_total_amount_in_inputs()
         outputs_total = self.get_total_amount_in_outputs()
         try:
             assert inputs_total == outputs_total
             self.is_funds_sufficient = True
+            logging.info("Funds are sufficient")
         except AssertionError:
-            print('Transaction inputs and outputs did not match')
+            logging.info('Transaction inputs and outputs did not match')
             raise TransactionException(f"inputs ({inputs_total}), outputs ({outputs_total})",
                                        "Transaction inputs and outputs did not match")
 
     def broadcast(self):
-        node_list = self.network.known_nodes
+        logging.info("Broadcasting to all nodes")
+        node_list = self.known_node_memory.known_nodes
         for node in node_list:
-            if node.hostname != self.network.node.hostname:
+            if node.hostname != self.hostname and node.hostname != self.sender:
                 try:
-                    node.send_transaction(self.transaction_data)
+                    logging.info(f"Broadcasting to {node.hostname}")
+                    node.send_transaction({"transaction": self.transaction_data})
                 except requests.ConnectionError:
-                    pass
+                    logging.info(f"Failed broadcasting to {node.hostname}")
 
     def store(self):
         if self.is_valid and self.is_funds_sufficient:
+            logging.info("Storing transaction data in memory")
+            logging.info(f"Transaction data: {self.transaction_data}")
             current_transactions = self.mempool.get_transactions_from_memory()
             current_transactions.append(self.transaction_data)
             self.mempool.store_transactions_in_memory(current_transactions)

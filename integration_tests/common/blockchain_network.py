@@ -7,6 +7,7 @@ NODE02_HOSTNAME = "node02.my-blockchain.gruyaume.com"
 
 class DefaultBlockchainNetwork:
     def __init__(self):
+        # self.node_list = [Node(NODE00_HOSTNAME)]
         self.node_list = [Node(NODE00_HOSTNAME), Node(NODE01_HOSTNAME), Node(NODE02_HOSTNAME)]
 
     def restart(self):

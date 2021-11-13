@@ -153,16 +153,16 @@ def blockchain(albert_wallet, bertrand_wallet, camille_wallet):
 
 @patch("common.io_blockchain.get_blockchain_from_memory")
 def test_given_transactions_in_mem_pool_when_new_block_is_created_then_header_hash_starts_with_four_zeros(
-        mock_get_blockchain_from_memory_, store_transactions_in_mem_pool, starting_zeros, network, blockchain):
+        mock_get_blockchain_from_memory_, store_transactions_in_mem_pool, starting_zeros, network, blockchain, mempool):
     mock_get_blockchain_from_memory_.return_value = ""
-    pow = ProofOfWork(network)
+    pow = ProofOfWork(network, mempool)
     pow.create_new_block()
     assert pow.new_block.block_header.hash.startswith(starting_zeros)
 
 
 def test_given_transactions_in_mem_pool_when_create_new_block_then_coinbase_transaction_is_added(
-        store_transactions_in_mem_pool, transactions, transaction_fee, network):
-    pow = ProofOfWork(network)
+        store_transactions_in_mem_pool, transactions, transaction_fee, network, mempool):
+    pow = ProofOfWork(network, mempool)
     pow.create_new_block()
     new_block_transactions = pow.new_block.transactions
 
@@ -176,9 +176,9 @@ def test_given_transactions_in_mem_pool_when_create_new_block_then_coinbase_tran
     }
 
 
-def test_given_no_transaction_when_get_transaction_fees_then_0_is_returned(network):
+def test_given_no_transaction_when_get_transaction_fees_then_0_is_returned(network, mempool):
     transactions = []
-    pow = ProofOfWork(network)
+    pow = ProofOfWork(network, mempool)
 
     transaction_fees = pow.get_transaction_fees(transactions)
 
@@ -186,8 +186,8 @@ def test_given_no_transaction_when_get_transaction_fees_then_0_is_returned(netwo
 
 
 def test_given_transactions_when_get_transaction_fees_then_transaction_fees_are_returned(
-        transactions, network):
-    pow = ProofOfWork(network)
+        transactions, network, mempool):
+    pow = ProofOfWork(network, mempool)
 
     transaction_fees = pow.get_transaction_fees(transactions)
 
@@ -195,8 +195,8 @@ def test_given_transactions_when_get_transaction_fees_then_transaction_fees_are_
 
 
 def test_given_transaction_fees_when_get_coinbase_transaction_then_coinbase_transaction_is_returned(
-        transaction_fee, network):
-    pow = ProofOfWork(network)
+        transaction_fee, network, mempool):
+    pow = ProofOfWork(network, mempool)
 
     coinbase_transaction = pow.get_coinbase_transaction(transaction_fee)
 

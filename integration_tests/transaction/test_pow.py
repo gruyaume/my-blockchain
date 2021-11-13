@@ -52,3 +52,4 @@ def test_given_good_transaction_when_accepted_then_transaction_is_eventually_add
             break
         time.sleep(3)
         passed_time = time.time() - start_time
+    raise

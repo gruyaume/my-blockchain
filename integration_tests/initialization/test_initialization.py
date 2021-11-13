@@ -3,7 +3,8 @@
 # import pytest
 #
 # from common.node import Node
-# from integration_tests.common.blockchain_network import DefaultBlockchainNetwork, NODE00_HOSTNAME, NODE01_HOSTNAME, NODE02_HOSTNAME
+# from integration_tests.common.blockchain_network import DefaultBlockchainNetwork, NODE00_HOSTNAME, \
+#     NODE01_HOSTNAME, NODE02_HOSTNAME
 #
 #
 # @pytest.fixture(scope="module")

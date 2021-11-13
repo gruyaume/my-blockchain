@@ -1,1 +1,0 @@
-BLOCK_REWARD = 6.25

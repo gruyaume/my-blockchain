@@ -21,6 +21,10 @@ spec:
           value: "example-blockchain.com"
         - name: MEMPOOL_DIR
           value: "/mempool/mempool"
+        - name: KNOWN_NODES_DIR
+          value: "/mem/known_nodes"
+        - name: BLOCKCHAIN_DIR
+          value: "/mem/blockchain"
         volumeMounts:
           - name: mempool
             mountPath: /mempool
@@ -31,11 +35,15 @@ spec:
         - name: MY_HOSTNAME
           value: "example-blockchain.com"
         - name: MEMPOOL_DIR
-          value: "/mempool/mempool"
+          value: "/mem/mempool"
+        - name: KNOWN_NODES_DIR
+          value: "/mem/known_nodes"
+        - name: BLOCKCHAIN_DIR
+          value: "/mem/blockchain"
         volumeMounts:
         - name: mempool
           mountPath: /mempool
       volumes:
-      - name: mempool
+      - name: mem
         hostPath:
-          path: /mempool
+          path: /mem

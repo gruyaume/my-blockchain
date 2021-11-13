@@ -1,6 +1,8 @@
 from pytest import fixture
 
 from common.block import Block, BlockHeader
+from common.io_blockchain import BlockchainMemory
+from common.io_known_nodes import KnownNodesMemory
 from common.io_mem_pool import MemPool
 from common.network import Network
 from common.node import Node
@@ -10,13 +12,21 @@ from node.transaction_validation.transaction_validation import Transaction
 class TestTransaction:
 
     @fixture(scope="module")
+    def blockchain_memory(self):
+        return BlockchainMemory("src/doc/blockchain")
+
+    @fixture(scope="module")
+    def known_nodes_memory(self):
+        return KnownNodesMemory("src/doc/known_nodes.json")
+
+    @fixture(scope="module")
     def mempool(self):
         return MemPool("src/doc/mem_pool")
 
     @fixture(scope="module")
-    def network(self):
+    def network(self, blockchain_memory, known_nodes_memory):
         node = Node("1.1.1.1:1234")
-        return Network(node)
+        return Network(node, blockchain_memory, known_nodes_memory)
 
     @fixture(scope="module")
     def blockchain_base(self):
