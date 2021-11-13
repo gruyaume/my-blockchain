@@ -26,8 +26,8 @@ spec:
         - name: BLOCKCHAIN_DIR
           value: "/mem/blockchain"
         volumeMounts:
-          - name: mempool
-            mountPath: /mempool
+          - name: mem
+            mountPath: /mem
       - name: my-miner
         image: gruyaume/my-miner:1.0.0
         imagePullPolicy: Always
@@ -41,8 +41,8 @@ spec:
         - name: BLOCKCHAIN_DIR
           value: "/mem/blockchain"
         volumeMounts:
-        - name: mempool
-          mountPath: /mempool
+        - name: mem
+          mountPath: /mem
       volumes:
       - name: mem
         hostPath:
