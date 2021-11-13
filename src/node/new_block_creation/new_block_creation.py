@@ -94,9 +94,10 @@ class ProofOfWork:
         return {"inputs": [],
                 "outputs": [transaction_output.to_dict()]}
 
-    def broadcast(self):
+    def broadcast(self) -> bool:
         logging.info("Broadcasting to other nodes")
         node_list = self.known_nodes_memory.known_nodes
+        broadcasted_node = False
         for node in node_list:
             if node.hostname != self.hostname:
                 block_content = {
@@ -109,5 +110,9 @@ class ProofOfWork:
                 try:
                     logging.info(f"Broadcasting to {node.hostname}")
                     node.send_new_block(block_content)
-                except requests.exceptions.ConnectionError:
-                    logging.info(f"Failed broadcasting to {node.hostname}")
+                    broadcasted_node = True
+                except requests.exceptions.ConnectionError as e:
+                    logging.info(f"Failed broadcasting to {node.hostname}: {e}")
+                except requests.exceptions.HTTPError as e:
+                    logging.info(f"Failed broadcasting to {node.hostname}: {e}")
+        return broadcasted_node

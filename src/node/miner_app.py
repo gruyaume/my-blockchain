@@ -1,7 +1,7 @@
 import logging
 import os
 import time
-
+import requests
 from common.io_mem_pool import MemPool
 from node.new_block_creation.new_block_creation import ProofOfWork, BlockException
 

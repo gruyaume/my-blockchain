@@ -23,6 +23,6 @@ Integration tests allow to complete transactions from the wallet to the node.
 
 Run integration tests:
 ```bash
-export PYTHONPATH=src
-pytest integration_tests
+pip3 install tox
+tox -e integration
 ```
