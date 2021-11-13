@@ -13,7 +13,7 @@ The goal of this project is to provide code to support a tutorial on blockchains
 7. [New Block Creation and Proof-of-Work](https://gruyaume.medium.com/create-your-own-blockchain-using-python-pt-7-6cdcb44697fe)
 8. [Incentives and Transaction fees](https://gruyaume.medium.com/create-your-own-blockchain-using-python-pt-8-bf33e01f7cbb)
 9. [A Distributed Network](https://gruyaume.medium.com/create-your-own-blockchain-using-python-pt-9-240698fe513b)
-10. [Deployment](https://)
+10. [Publishing and testing](https://gruyaume.medium.com/create-your-own-blockchain-using-python-pt-10-824e6af111f8)
 
 ## Requirements
 
