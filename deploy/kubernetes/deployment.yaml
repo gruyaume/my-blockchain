@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-blockchain
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-blockchain
+  template:
+    metadata:
+      labels:
+        app: my-blockchain
+    spec:
+      containers:
+      - name: my-blockchain
+        image: gruyaume/my-blockchain:1.0.0
+        imagePullPolicy: Always
+        env:
+        - name: MY_HOSTNAME
+          value: "example-blockchain.com"
+        - name: MEMPOOL_DIR
+          value: "/mem/mempool"
+        - name: KNOWN_NODES_DIR
+          value: "/mem/known_nodes"
+        - name: BLOCKCHAIN_DIR
+          value: "/mem/blockchain"
+        volumeMounts:
+          - name: mem
+            mountPath: /mem
+      - name: my-miner
+        image: gruyaume/my-miner:1.0.0
+        imagePullPolicy: Always
+        env:
+        - name: MY_HOSTNAME
+          value: "example-blockchain.com"
+        - name: MEMPOOL_DIR
+          value: "/mem/mempool"
+        - name: KNOWN_NODES_DIR
+          value: "/mem/known_nodes"
+        - name: BLOCKCHAIN_DIR
+          value: "/mem/blockchain"
+        volumeMounts:
+        - name: mem
+          mountPath: /mem
+      volumes:
+      - name: mem
+        hostPath:
+          path: /mem

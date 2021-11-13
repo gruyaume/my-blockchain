@@ -4,7 +4,7 @@ from blockchain_users.albert import private_key as albert_private_key
 from blockchain_users.bertrand import private_key as bertrand_private_key
 from blockchain_users.camille import private_key as camille_private_key
 from common.block import Block, BlockHeader
-from common.io_blockchain import store_blockchain_in_memory
+from common.io_blockchain import BlockchainMemory
 from common.merkle_tree import get_merkle_root
 from common.transaction import Transaction
 from common.transaction_input import TransactionInput
@@ -16,7 +16,7 @@ bertrand_wallet = Owner(private_key=bertrand_private_key)
 camille_wallet = Owner(private_key=camille_private_key)
 
 
-def initialize_default_blockchain():
+def initialize_default_blockchain(blockchain_memory: BlockchainMemory):
     print("Initializing default blockchain")
     timestamp_0 = datetime.timestamp(datetime.fromisoformat('2011-11-04 00:05:23.111'))
     input_0 = TransactionInput(transaction_hash="abcd1234",
@@ -81,4 +81,4 @@ def initialize_default_blockchain():
         block_header=block_header_3,
         previous_block=block_2,
     )
-    store_blockchain_in_memory(block_3)
+    blockchain_memory.store_blockchain_in_memory(block_3)

@@ -1,17 +1,19 @@
 import json
+import logging
 from datetime import datetime
+
+import requests
 
 from blockchain_users.miner import private_key as miner_private_key
 from common.block import Block, BlockHeader
-from common.block_reward import BLOCK_REWARD
-from common.io_blockchain import get_blockchain_from_memory
-from common.io_mem_pool import get_transactions_from_memory
+from common.io_blockchain import BlockchainMemory
+from common.io_mem_pool import MemPool
+from common.io_known_nodes import KnownNodesMemory
 from common.merkle_tree import get_merkle_root
-from common.network import Network
 from common.owner import Owner
 from common.transaction_output import TransactionOutput
 from common.utils import calculate_hash
-from common.values import NUMBER_OF_LEADING_ZEROS
+from common.values import NUMBER_OF_LEADING_ZEROS, BLOCK_REWARD
 
 
 class BlockException(Exception):
@@ -21,13 +23,18 @@ class BlockException(Exception):
 
 
 class ProofOfWork:
-    def __init__(self, network: Network):
-        self.network = network
-        self.blockchain = get_blockchain_from_memory()
+    def __init__(self, hostname: str):
+        logging.info("Starting Proof of Work")
+        self.known_nodes_memory = KnownNodesMemory()
+        blockchain_memory = BlockchainMemory()
+        self.hostname = hostname
+        self.mempool = MemPool()
+        self.blockchain = blockchain_memory.get_blockchain_from_memory()
         self.new_block = None
 
     @staticmethod
     def get_noonce(block_header: BlockHeader) -> int:
+        logging.info("Trying to find noonce")
         block_header_hash = ""
         noonce = block_header.noonce
         starting_zeros = "".join([str(0) for _ in range(NUMBER_OF_LEADING_ZEROS)])
@@ -40,10 +47,12 @@ class ProofOfWork:
                 "noonce": noonce
             }
             block_header_hash = calculate_hash(json.dumps(block_header_content))
+        logging.info("Found the noonce!")
         return noonce
 
     def create_new_block(self):
-        transactions = get_transactions_from_memory()
+        logging.info("Creating new block")
+        transactions = self.mempool.get_transactions_from_memory()
         if transactions:
             transaction_fees = self.get_transaction_fees(transactions)
             coinbase_transaction = self.get_coinbase_transaction(transaction_fees)
@@ -85,14 +94,25 @@ class ProofOfWork:
         return {"inputs": [],
                 "outputs": [transaction_output.to_dict()]}
 
-    def broadcast(self):
-        node_list = self.network.known_nodes
+    def broadcast(self) -> bool:
+        logging.info("Broadcasting to other nodes")
+        node_list = self.known_nodes_memory.known_nodes
+        broadcasted_node = False
         for node in node_list:
-            if node.hostname != self.network.node.hostname:
+            if node.hostname != self.hostname:
                 block_content = {
                     "block": {
                         "header": self.new_block.block_header.to_dict,
                         "transactions": self.new_block.transactions
-                    }
+                    },
+                    "sender": self.hostname
                 }
-                node.send_new_block(block_content)
+                try:
+                    logging.info(f"Broadcasting to {node.hostname}")
+                    node.send_new_block(block_content)
+                    broadcasted_node = True
+                except requests.exceptions.ConnectionError as e:
+                    logging.info(f"Failed broadcasting to {node.hostname}: {e}")
+                except requests.exceptions.HTTPError as e:
+                    logging.info(f"Failed broadcasting to {node.hostname}: {e}")
+        return broadcasted_node

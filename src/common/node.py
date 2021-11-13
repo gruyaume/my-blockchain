@@ -15,9 +15,12 @@ class Node:
             "hostname": self.hostname
         }
 
-    def post(self, endpoint: str, data: dict) -> requests.Response:
+    def post(self, endpoint: str, data: dict = None) -> requests.Response:
         url = f"{self.base_url}{endpoint}"
-        req_return = requests.post(url, json=data)
+        if data:
+            req_return = requests.post(url, json=data)
+        else:
+            req_return = requests.post(url)
         req_return.raise_for_status()
         return req_return
 
@@ -34,9 +37,8 @@ class Node:
         data = {"hostname": hostname}
         return self.post(endpoint="new_node_advertisement", data=data)
 
-    def known_node_request(self, hostname: str):
-        data = {"hostname": hostname}
-        return self.get(endpoint="known_node_request", data=data)
+    def known_node_request(self):
+        return self.get(endpoint="known_node_request")
 
     def send_new_block(self, block: dict) -> requests.Response:
         return self.post(endpoint="block", data=block)
@@ -46,3 +48,6 @@ class Node:
 
     def get_blockchain(self) -> list:
         return self.get(endpoint="block")
+
+    def restart(self):
+        return self.post(endpoint="restart")

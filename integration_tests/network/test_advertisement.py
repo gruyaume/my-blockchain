@@ -1,72 +1,30 @@
-import json
+import time
 
-import requests
-from pytest import fixture
+import pytest
 
-from common.network import Network
-from integration_tests.common.flask import Server
-from node.main import MY_HOSTNAME as SERVER_HOSTNAME
+from common.node import Node
+from integration_tests.common.blockchain_network import DefaultBlockchainNetwork, NODE00_HOSTNAME
 
 
-def advertise(current_node_hostname: str, new_node_hostname: str):
-    base_url = f"http://{current_node_hostname}/"
-    endpoint = "new_node_advertisement"
-    data = {"hostname": new_node_hostname}
-    url = f"{base_url}{endpoint}"
-    req_return = requests.post(url, json=data)
-    req_return.raise_for_status()
+@pytest.fixture(scope="module")
+def default_node():
+    return Node(NODE00_HOSTNAME)
 
 
-def request_known_nodes(current_node_hostname: str) -> list:
-    base_url = f"http://{current_node_hostname}/"
-    endpoint = "known_node_request"
-    url = f"{base_url}{endpoint}"
-    req_return = requests.get(url)
-    req_return.raise_for_status()
-    return req_return.json()
+@pytest.fixture(scope="module")
+def blockchain_network():
+    return DefaultBlockchainNetwork()
 
 
-@fixture(scope="module")
-def server():
-    server = Server()
-    return server
-
-
-def test_given_only_1_node_when_new_node_advertises_then_node_information_is_stored(server):
+def test_given_only_default_node_is_up_when_new_node_advertises_then_node_information_is_stored(
+    default_node, blockchain_network
+):
+    time.sleep(2)
     new_node_hostname = "1.1.1.1:1234"
-
-    server.start()
-
-    advertise(SERVER_HOSTNAME, new_node_hostname)
-
-    with open(Network.KNOWN_NODES_FILE) as f:
-        nodes = json.load(f)
-
-    assert nodes == [
-        {
-            'hostname': SERVER_HOSTNAME,
-        },
-        {
-            'hostname': new_node_hostname,
-        }
-    ]
-
-    server.stop()
-
-
-def test_given_existing_node_when_known_node_request_then_known_nodes_are_returned(server):
-    new_node_hostname = "1.1.1.1:1234"
-    server.start()
-    advertise(SERVER_HOSTNAME, new_node_hostname)
-    known_nodes = request_known_nodes(SERVER_HOSTNAME)
-
-    assert known_nodes == [
-        {
-            'hostname': SERVER_HOSTNAME,
-        },
-        {
-            'hostname': new_node_hostname,
-        }
-    ]
-
-    server.stop()
+    blockchain_network.restart()
+    time.sleep(2)
+    default_node.advertise(new_node_hostname)
+    time.sleep(1)
+    final_default_server_known_nodes = default_node.known_node_request()
+    expected_dict = {'hostname': new_node_hostname}
+    assert expected_dict in final_default_server_known_nodes
