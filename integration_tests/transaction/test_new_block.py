@@ -1,7 +1,6 @@
 import time
 
 import pytest
-import requests
 
 from blockchain_users.camille import private_key as camille_private_key
 from common.block import BlockHeader
