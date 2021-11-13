@@ -20,7 +20,7 @@ spec:
         - name: MY_HOSTNAME
           value: "example-blockchain.com"
         - name: MEMPOOL_DIR
-          value: "/mempool/mempool"
+          value: "/mem/mempool"
         - name: KNOWN_NODES_DIR
           value: "/mem/known_nodes"
         - name: BLOCKCHAIN_DIR
